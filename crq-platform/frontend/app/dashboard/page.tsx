@@ -25,6 +25,19 @@ import {
   Info,
   DollarSign,
   Lock,
+  X,
+  Zap,
+  Activity,
+  Layers,
+  MapPin,
+  Compass,
+  Check,
+  Eye,
+  Shield,
+  ArrowDownRight,
+  Crosshair,
+  Filter,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -63,6 +76,16 @@ export default function DashboardPage() {
   const [whatIfAiSurge, setWhatIfAiSurge] = useState(false);
   const [whatIfResult, setWhatIfResult] = useState<any>(null);
 
+  // Root-cause failure & loss map modal state
+  const [showFailureMapModal, setShowFailureMapModal] = useState(false);
+  const [failureMapMode, setFailureMapMode] = useState<"failure" | "solution">("failure");
+  const [selectedPointLabel, setSelectedPointLabel] = useState("T-0 (Current Incident)");
+  const [solutionApplied, setSolutionApplied] = useState(false);
+
+  // Analyst view sorting & filtering
+  const [analystSortBy, setAnalystSortBy] = useState<"financialImpact" | "cvss">("financialImpact");
+  const [analystFilter, setAnalystFilter] = useState<"all" | "open" | "remediated">("all");
+
   // Connector form state
   const [activeConnectorCat, setActiveConnectorCat] = useState<string>("vulnerability");
   const [connectorSubTab, setConnectorSubTab] = useState<"live" | "upload" | "sample">("live");
@@ -90,6 +113,7 @@ export default function DashboardPage() {
     if (storedRole === "analyst") setActiveTab("analyst");
     else if (storedRole === "auditor") setActiveTab("auditor");
     else if (storedRole === "admin") setActiveTab("admin");
+    else setActiveTab("cockpit");
 
     loadAllData();
   }, []);
@@ -132,11 +156,12 @@ export default function DashboardPage() {
     setActiveRole(newRole);
     localStorage.setItem("aegis_role", newRole);
 
-    if (newRole === "analyst" && activeTab === "cockpit") setActiveTab("analyst");
-    if (newRole === "auditor") setActiveTab("auditor");
-    if (newRole === "admin") setActiveTab("admin");
-    if (newRole === "ciso") setActiveTab("cockpit");
+    if (newRole === "analyst") setActiveTab("analyst");
+    else if (newRole === "auditor") setActiveTab("auditor");
+    else if (newRole === "admin") setActiveTab("admin");
+    else if (newRole === "ciso") setActiveTab("cockpit");
   };
+
 
   // What-if simulator recompute with live backend quantification & smooth fallback
   useEffect(() => {
@@ -419,6 +444,60 @@ export default function DashboardPage() {
 
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 space-y-8">
+        {/* Persona Context & Role Focus Banner */}
+        <div className="p-5 rounded-2xl bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#71C9CE] flex items-center justify-center text-[#042F2E] font-black shrink-0 border border-[#A6E3E9] shadow-sm">
+              {currentRole === "ciso" && <BarChart3 className="w-5 h-5" />}
+              {currentRole === "analyst" && <Terminal className="w-5 h-5" />}
+              {currentRole === "auditor" && <Scale className="w-5 h-5" />}
+              {currentRole === "admin" && <Settings className="w-5 h-5" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#083344]">
+                  {currentRole === "ciso" && "CISO Workspace — David Chen"}
+                  {currentRole === "analyst" && "Lead Security Analyst Workspace — Marcus Brody"}
+                  {currentRole === "auditor" && "Regulatory Compliance Auditor — Elena Rostova"}
+                  {currentRole === "admin" && "Organization Admin Workspace — Sarah Vance"}
+                </span>
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-extrabold border ${
+                  currentRole === "auditor" ? "bg-purple-100 text-purple-900 border-purple-300" :
+                  currentRole === "analyst" ? "bg-white text-[#083344] border-[#71C9CE]" :
+                  currentRole === "admin" ? "bg-emerald-100 text-emerald-900 border-emerald-300" :
+                  "bg-[#71C9CE] text-[#042F2E] border-[#71C9CE]"
+                }`}>
+                  {currentRole.toUpperCase()} MODE ACTIVE
+                </span>
+              </div>
+              <p className="text-xs text-[#164E63] mt-1 font-medium">
+                {currentRole === "ciso" && "Strategic financial risk quantification, 95% tail VaR, ROSI capital allocation, and root-cause failure blast radius inspection."}
+                {currentRole === "analyst" && "Tactical vulnerability triage prioritized by financial loss ($), active CISA KEV exploitation, asset criticality weights, and 1-click remediation."}
+                {currentRole === "auditor" && "Independent compliance assurance. SEC Form 8-K Item 1.05 4-Day materiality evaluation, DORA Art. 16 concentration risk, and cryptographic audit log."}
+                {currentRole === "admin" && "Configure live API connectors, ingest manual CSV/SIEM telemetry feeds, and manage organization teammates and RBAC roles."}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick 1-Click Role Switcher Buttons */}
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+            <span className="text-[10px] font-mono font-bold text-[#164E63] mr-1">Switch View:</span>
+            {(["ciso", "analyst", "auditor", "admin"] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => handleRoleChange(r)}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold font-mono transition-all border ${
+                  currentRole === r
+                    ? "bg-[#71C9CE] text-[#042F2E] border-[#71C9CE] shadow-sm ring-2 ring-[#71C9CE]/40 font-black"
+                    : "bg-white text-[#164E63] border-[#A6E3E9] hover:bg-[#E3FDFD]"
+                }`}
+              >
+                {r.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* ============================================================ */}
         {/* TAB 1: EXECUTIVE COCKPIT (CISO)                              */}
         {/* ============================================================ */}
@@ -484,31 +563,75 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="px-3.5 py-2 rounded-xl bg-[#CBF1F5] border border-[#71C9CE] text-[#083344] font-mono text-xs shrink-0 font-extrabold shadow-sm">
-                Δ EAL: +{formatCurrency(overview?.changeAttribution?.deltaEal || 75000)}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    setSelectedPointLabel("T-0 (Current Incident: Core Payment Gateway Spike)");
+                    setFailureMapMode("failure");
+                    setShowFailureMapModal(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs transition-all shadow-sm flex items-center gap-1.5 border border-[#71C9CE]"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Inspect Blast Radius Map</span>
+                </button>
+                <div className="px-3.5 py-2 rounded-xl bg-[#CBF1F5] border border-[#71C9CE] text-[#083344] font-mono text-xs font-extrabold shadow-sm">
+                  Δ EAL: +{formatCurrency(overview?.changeAttribution?.deltaEal || 75000)}
+                </div>
               </div>
             </div>
 
             {/* Historical Risk Movement Chart */}
             <div className="p-6 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] space-y-4 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-[#0C262D]">Historical Financial Risk Trend Line</h3>
+                  <h3 className="text-sm font-bold text-[#0C262D] flex items-center gap-2">
+                    <span>Historical Financial Risk Trend Line</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#71C9CE]/30 text-[#083344] font-bold">
+                      Interactive Drilldown
+                    </span>
+                  </h3>
                   <p className="text-xs text-[#164E63]">Point-in-time EAL and 95% VaR movements across continuous re-calculations</p>
                 </div>
-                <div className="flex items-center gap-4 text-xs font-mono">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#083344]" />
-                    <span className="text-[#083344] font-bold">EAL ($M)</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 text-xs font-mono mr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#083344]" />
+                      <span className="text-[#083344] font-bold">EAL ($M)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#71C9CE]" />
+                      <span className="text-[#164E63] font-bold">95% VaR ($M)</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#71C9CE]" />
-                    <span className="text-[#164E63] font-bold">95% VaR ($M)</span>
-                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSelectedPointLabel("T-0 (Current Incident: Core Payment Gateway Spike)");
+                      setFailureMapMode("failure");
+                      setShowFailureMapModal(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs transition-all shadow-sm flex items-center gap-1.5 border border-[#71C9CE]"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Inspect Failure & Loss Map</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="h-64 w-full bg-white p-4 rounded-xl border border-[#A6E3E9]">
+              <div
+                onClick={() => {
+                  setSelectedPointLabel("T-0 (Current Incident: Core Payment Gateway Spike)");
+                  setFailureMapMode("failure");
+                  setShowFailureMapModal(true);
+                }}
+                className="h-64 w-full bg-white p-4 rounded-xl border border-[#A6E3E9] cursor-pointer hover:border-[#71C9CE] transition-all relative group"
+                title="Click anywhere on chart to inspect failure mapping and simulate optimal solution"
+              >
+                <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg bg-[#083344] text-white text-[10px] font-mono font-bold shadow-md flex items-center gap-1 pointer-events-none">
+                  <Eye className="w-3 h-3" />
+                  <span>Click point to open Failure Map</span>
+                </div>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trendChartData}>
                     <defs>
@@ -532,7 +655,49 @@ export default function DashboardPage() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Interactive Point Drilldown Selectors */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#A6E3E9]/60">
+                <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#164E63] font-bold">
+                  <Compass className="w-3.5 h-3.5 text-[#083344]" />
+                  <span>Click timeline point to expand failure architecture & attack path:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedPointLabel("T-0 (Current Incident: Core Payment Gateway Spike)");
+                      setFailureMapMode("failure");
+                      setShowFailureMapModal(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
+                    <span>📍 T-0 Spike: Payment Gateway ($2.55M Exposure)</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedPointLabel("T-6d (Vendor SPoF Concentration in AWS US-East-1)");
+                      setFailureMapMode("failure");
+                      setShowFailureMapModal(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#CBF1F5] border border-[#A6E3E9] text-[#083344] text-[10px] font-mono font-bold transition-all shadow-sm"
+                  >
+                    <span>📍 T-6d: AWS US-East-1 SPoF</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedPointLabel("T-12d (Baseline OpenFAIR Calibration)");
+                      setFailureMapMode("failure");
+                      setShowFailureMapModal(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#CBF1F5] border border-[#A6E3E9] text-[#083344] text-[10px] font-mono font-bold transition-all shadow-sm"
+                  >
+                    <span>📍 T-12d: Baseline Model Calibration</span>
+                  </button>
+                </div>
+              </div>
             </div>
+
 
             {/* Interactive "What-If" Control Simulator */}
             <div className="p-6 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] space-y-4 shadow-sm">
@@ -645,80 +810,182 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {activeTab === "analyst" && (
           <div className="space-y-6">
+            {/* Analyst Tactical KPI Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] shadow-sm">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#164E63]">Total Triage Exposure</span>
+                <div className="text-2xl font-black text-rose-700 mt-1">
+                  {formatCurrency(findings.filter((f) => !f.isPatched).reduce((s, f) => s + (f.financialImpact || 0), 0))}
+                </div>
+                <p className="text-[11px] text-[#164E63] mt-0.5 font-medium">Unpatched loss exposure across active assets</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase font-bold text-[#083344]">CISA KEV Actively Exploited</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                </div>
+                <div className="text-2xl font-black text-[#042F2E] mt-1">
+                  {findings.filter((f) => !f.isPatched && f.inCisaKev).length} Critical CVEs
+                </div>
+                <p className="text-[11px] text-[#164E63] mt-0.5 font-medium">Known Exploited Vulnerabilities catalog</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] shadow-sm">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#164E63]">Priority Asset at Risk</span>
+                <div className="text-base font-extrabold text-[#0C262D] mt-1 truncate">Core Payment Gateway</div>
+                <p className="text-[11px] text-[#164E63] mt-0.5 font-medium">95% Criticality • Direct PII linkage</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] shadow-sm">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#164E63]">Model Remediation MTTR</span>
+                <div className="text-2xl font-black text-emerald-800 mt-1">3.4 Days</div>
+                <p className="text-[11px] text-[#164E63] mt-0.5 font-medium">Continuous telemetry feedback loop</p>
+              </div>
+            </div>
+
+            {/* Analyst Controls & Sort Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] shadow-sm">
               <div>
-                <h2 className="text-base font-extrabold text-[#0C262D]">Live Vulnerability Finding Queue</h2>
-                <p className="text-xs text-[#164E63] font-medium">
-                  Prioritized by <strong>estimated financial loss ($)</strong> if unpatched, not just technical CVSS score.
+                <h2 className="text-base font-extrabold text-[#0C262D] flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-[#083344]" />
+                  <span>Vulnerability Finding & Triage Queue</span>
+                </h2>
+                <p className="text-xs text-[#164E63] font-medium mt-0.5">
+                  Financial Exposure ($) prioritizes by actual potential business loss rather than arbitrary technical CVSS score alone.
                 </p>
               </div>
 
-              {currentRole === "auditor" && (
-                <span className="px-3 py-1 rounded-xl bg-purple-100 border border-purple-300 text-purple-900 text-xs font-mono font-bold">
-                  Auditor Mode: Remediate buttons disabled
-                </span>
-              )}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Sort Option Toggle */}
+                <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border border-[#A6E3E9] text-xs font-mono shadow-sm">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#164E63] ml-1.5" />
+                  <span className="text-[10px] text-[#164E63] font-bold">Sort:</span>
+                  <button
+                    onClick={() => setAnalystSortBy("financialImpact")}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                      analystSortBy === "financialImpact"
+                        ? "bg-[#71C9CE] text-[#042F2E]"
+                        : "text-[#164E63] hover:text-[#0C262D]"
+                    }`}
+                  >
+                    Financial Loss ($)
+                  </button>
+                  <button
+                    onClick={() => setAnalystSortBy("cvss")}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                      analystSortBy === "cvss"
+                        ? "bg-[#71C9CE] text-[#042F2E]"
+                        : "text-[#164E63] hover:text-[#0C262D]"
+                    }`}
+                  >
+                    CVSS Score
+                  </button>
+                </div>
+
+                {/* Status Filter */}
+                <div className="flex items-center gap-1 p-1 bg-white rounded-xl border border-[#A6E3E9] text-xs font-mono shadow-sm">
+                  <Filter className="w-3 h-3 text-[#164E63] ml-1.5" />
+                  {(["all", "open", "remediated"] as const).map((fil) => (
+                    <button
+                      key={fil}
+                      onClick={() => setAnalystFilter(fil)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                        analystFilter === fil ? "bg-[#71C9CE] text-[#042F2E]" : "text-[#164E63] hover:text-[#0C262D]"
+                      }`}
+                    >
+                      {fil}
+                    </button>
+                  ))}
+                </div>
+
+                {currentRole === "auditor" && (
+                  <span className="px-3 py-1 rounded-xl bg-purple-100 border border-purple-300 text-purple-900 text-xs font-mono font-bold">
+                    Auditor Mode: Read-Only
+                  </span>
+                )}
+              </div>
             </div>
 
+            {/* Findings Cards */}
             <div className="space-y-3">
-              {findings.map((f) => (
-                <div
-                  key={f.id}
-                  className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all shadow-sm ${
-                    f.isPatched
-                      ? "bg-slate-100/70 border-slate-300 opacity-60"
-                      : "bg-white border-[#A6E3E9] hover:border-[#71C9CE] hover:shadow-md"
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-sm text-[#0C262D]">{f.cve}</span>
-                      <span
-                        className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
-                          f.severity === "Critical"
-                            ? "bg-rose-100 text-rose-800 border border-rose-300"
-                            : f.severity === "High"
-                            ? "bg-amber-100 text-amber-800 border border-amber-300"
-                            : "bg-slate-100 text-slate-700 border border-slate-300"
-                        }`}
-                      >
-                        {f.severity} (CVSS {f.cvssScore})
-                      </span>
-                      {f.inCisaKev && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-extrabold">
-                          CISA KEV ACTIVE
+              {[...findings]
+                .filter((f) => {
+                  if (analystFilter === "open") return !f.isPatched;
+                  if (analystFilter === "remediated") return f.isPatched;
+                  return true;
+                })
+                .sort((a, b) => {
+                  if (analystSortBy === "cvss") return b.cvssScore - a.cvssScore;
+                  return (b.financialImpact || 0) - (a.financialImpact || 0);
+                })
+                .map((f) => (
+                  <div
+                    key={f.id}
+                    className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all shadow-sm ${
+                      f.isPatched
+                        ? "bg-slate-100/70 border-slate-300 opacity-60"
+                        : "bg-white border-[#A6E3E9] hover:border-[#71C9CE] hover:shadow-md"
+                    }`}
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <span className="font-extrabold text-sm text-[#0C262D]">{f.cve}</span>
+                        <span
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                            f.severity === "Critical"
+                              ? "bg-rose-100 text-rose-800 border border-rose-300"
+                              : f.severity === "High"
+                              ? "bg-amber-100 text-amber-800 border border-amber-300"
+                              : "bg-slate-100 text-slate-700 border border-slate-300"
+                          }`}
+                        >
+                          {f.severity} (CVSS {f.cvssScore})
                         </span>
-                      )}
-                      {f.isPatched && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">
-                          REMEDIATED
+                        {f.inCisaKev && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-extrabold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
+                            <span>CISA KEV ACTIVE</span>
+                          </span>
+                        )}
+                        {f.isPatched && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">
+                            REMEDIATED & VERIFIED
+                          </span>
+                        )}
+                        <span className="text-[10px] font-mono text-[#164E63] px-2 py-0.5 rounded bg-[#CBF1F5] border border-[#A6E3E9]">
+                          Exploitability: {(f.exploitability * 100).toFixed(0)}%
                         </span>
+                      </div>
+                      <p className="text-xs text-[#164E63] font-medium">{f.title}</p>
+                      <div className="flex items-center gap-3 text-[11px] text-[#083344] font-mono font-semibold">
+                        <span>Target Asset: <strong>{f.assetName}</strong></span>
+                        <span>•</span>
+                        <span>Source: <strong className="text-[#164E63]">{f.sourceMode === "live" ? "Tenable Live API" : "Benchmark Ingestion"}</strong></span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-6 shrink-0">
+                      <div className="text-right">
+                        <span className="text-[10px] text-[#164E63] font-mono uppercase font-bold block">Financial Loss Exposure</span>
+                        <span className={`text-lg font-black font-mono ${f.isPatched ? "text-slate-400" : "text-rose-700"}`}>
+                          {formatCurrency(f.financialImpact)}
+                        </span>
+                      </div>
+
+                      {!f.isPatched && (
+                        <button
+                          onClick={() => handleRemediate(f.id)}
+                          disabled={currentRole === "auditor"}
+                          className="px-4 py-2 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm border border-[#71C9CE] flex items-center gap-1.5"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Remediate Finding</span>
+                        </button>
                       )}
                     </div>
-                    <p className="text-xs text-[#164E63] font-medium">{f.title}</p>
-                    <div className="text-[11px] text-[#083344] font-mono font-semibold">Asset: {f.assetName}</div>
                   </div>
-
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <span className="text-[10px] text-[#164E63] font-mono uppercase font-bold block">Financial Loss Exposure</span>
-                      <span className={`text-base font-black font-mono ${f.isPatched ? "text-slate-400" : "text-rose-700"}`}>
-                        {formatCurrency(f.financialImpact)}
-                      </span>
-                    </div>
-
-                    {!f.isPatched && (
-                      <button
-                        onClick={() => handleRemediate(f.id)}
-                        disabled={currentRole === "auditor"}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm border border-[#71C9CE]"
-                      >
-                        Remediate Finding
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
 
             {/* In-App Asset Register */}
@@ -1184,7 +1451,9 @@ export default function DashboardPage() {
                             {u.role}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-[#164E63]">{new Date(u.createdAt).toLocaleDateString()}</td>
+                        <td className="py-2.5 px-3 font-mono text-[#164E63]">
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "Active"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1193,7 +1462,369 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* ============================================================ */}
+        {/* INTERACTIVE SYSTEM FAILURE & LOSS BLAST RADIUS MAP MODAL     */}
+        {/* ============================================================ */}
+        {showFailureMapModal && (
+          <div className="fixed inset-0 z-50 bg-[#0C262D]/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-[#E3FDFD] border-2 border-[#71C9CE] rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              {/* Modal Top Bar */}
+              <div className="p-5 bg-[#CBF1F5] border-b border-[#A6E3E9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-[#71C9CE] flex items-center justify-center text-[#042F2E] font-black border border-[#A6E3E9] shadow-sm">
+                      {failureMapMode === "failure" ? <AlertTriangle className="w-4 h-4 text-rose-800" /> : <ShieldCheck className="w-4 h-4 text-[#042F2E]" />}
+                    </div>
+                    <h2 className="text-base font-extrabold text-[#0C262D]">
+                      {failureMapMode === "failure"
+                        ? "System Architecture Failure & Attack Path Blast Radius Map"
+                        : "Simulated Optimal Security Architecture & Solution Map"}
+                    </h2>
+                  </div>
+                  <p className="text-xs text-[#164E63] font-medium mt-1">
+                    Drilldown: <strong className="text-[#083344]">{selectedPointLabel}</strong>
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Mode Toggle */}
+                  <div className="flex rounded-xl bg-white p-1 border border-[#A6E3E9] text-xs font-mono shadow-sm">
+                    <button
+                      onClick={() => setFailureMapMode("failure")}
+                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all ${
+                        failureMapMode === "failure"
+                          ? "bg-rose-100 text-rose-900 border border-rose-300 shadow-sm"
+                          : "text-[#164E63] hover:text-[#0C262D]"
+                      }`}
+                    >
+                      🚨 System Failure (Root Cause)
+                    </button>
+                    <button
+                      onClick={() => setFailureMapMode("solution")}
+                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all flex items-center gap-1 ${
+                        failureMapMode === "solution"
+                          ? "bg-[#71C9CE] text-[#042F2E] border border-[#71C9CE] shadow-sm font-black"
+                          : "text-[#164E63] hover:text-[#0C262D]"
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3 text-[#042F2E]" />
+                      <span>⚡ Simulate Optimal Solution</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setShowFailureMapModal(false)}
+                    className="p-2 rounded-xl bg-white border border-[#A6E3E9] hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 text-[#164E63] transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+                {/* Mode Status Banner */}
+                {failureMapMode === "failure" ? (
+                  <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 space-y-1 shadow-sm">
+                    <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
+                      <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
+                      <span>Active System Failure State: Single Point of Failure (SPoF) Cascading Loss</span>
+                    </div>
+                    <p className="text-xs text-rose-800 font-medium">
+                      Exploitation of active CISA KEV CVE-2024-55591 on the Core Payment Gateway bypassed single-factor authentication, laterally accessed customer records, and forced a 36-hour multi-million dollar outage due to AWS US-East-1 regional lock.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-[#CBF1F5] border-2 border-[#71C9CE] text-[#042F2E] space-y-1 shadow-sm">
+                    <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
+                      <Sparkles className="w-4 h-4 text-[#083344]" />
+                      <span>Simulated Optimal Solution: Defense-in-Depth Architecture Mitigates 99.4% of Loss</span>
+                    </div>
+                    <p className="text-xs text-[#164E63] font-medium">
+                      Edge WAF virtual patching blocks RCE exploits in 0ms, FIDO2 hardware token WebAuthn eliminates administrative credential theft, and active-active US-West-2 warm standby reduces maximum downtime from 36 hours to under 90 seconds.
+                    </p>
+                  </div>
+                )}
+
+                {/* Topology & Blast Radius Interactive Flow Map */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-xs font-mono font-bold text-[#083344] uppercase tracking-wider border-b border-[#A6E3E9] pb-2">
+                    <span>Attack Vector & System Topology Mapping</span>
+                    <span>{failureMapMode === "failure" ? "Status: VULNERABLE & FAILING" : "Status: SHIELDED & OPTIMAL"}</span>
+                  </div>
+
+                  {/* Tier 1: Threat Source */}
+                  <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
+                    failureMapMode === "failure" ? "bg-white border-rose-300 ring-2 ring-rose-200" : "bg-white border-[#71C9CE] ring-2 ring-[#71C9CE]/25"
+                  }`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
+                          failureMapMode === "failure" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
+                        }`}>
+                          <Crosshair className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-[#0C262D]">Threat Source: Akira Ransomware / FIN7 Adversary</span>
+                          <span className="text-[11px] text-[#164E63] block font-mono">
+                            Exploitation vector: CVE-2024-55591 (Authentication Bypass, CVSS 9.8) • TEF: 14.5 attacks/year
+                          </span>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-mono px-2.5 py-1 rounded-lg font-extrabold uppercase ${
+                        failureMapMode === "failure" ? "bg-rose-100 text-rose-800 border border-rose-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                      }`}>
+                        {failureMapMode === "failure" ? "🚨 Active Exploitation" : "🛡️ Blocked at Edge WAF"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Connection Line */}
+                  <div className="flex justify-center my-1">
+                    <div className={`w-0.5 h-6 border-l-2 border-dashed ${failureMapMode === "failure" ? "border-rose-400" : "border-[#71C9CE]"}`} />
+                  </div>
+
+                  {/* Tier 2: The 3 Critical Failure Points / Mitigations */}
+                  <div>
+                    <div className="text-[11px] font-mono font-bold text-[#164E63] mb-2 uppercase">
+                      {failureMapMode === "failure" ? "Root Cause Failure Nodes (3 Breakdown Points):" : "Optimal Security Mitigations Deployed:"}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Node A */}
+                      <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
+                        failureMapMode === "failure" ? "bg-rose-50/70 border-rose-300" : "bg-[#CBF1F5] border-2 border-[#71C9CE]"
+                      }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="font-extrabold text-xs text-[#0C262D]">
+                            {failureMapMode === "failure" ? "Point 1: Missing Hardware MFA" : "Solution 1: FIDO2 Hardware Token"}
+                          </span>
+                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase ${
+                            failureMapMode === "failure" ? "bg-rose-200 text-rose-900" : "bg-emerald-200 text-emerald-900"
+                          }`}>
+                            {failureMapMode === "failure" ? "CRITICAL GAP" : "RESOLVED"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#164E63] font-medium leading-relaxed">
+                          {failureMapMode === "failure"
+                            ? "Admin gateway relied on single-factor password; session hijacked through spear-phishing token extraction."
+                            : "Hardware token WebAuthn enforced across administrative endpoints. 100% immune to credential reuse and phishing."}
+                        </p>
+                      </div>
+
+                      {/* Node B */}
+                      <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
+                        failureMapMode === "failure" ? "bg-rose-50/70 border-rose-300" : "bg-[#CBF1F5] border-2 border-[#71C9CE]"
+                      }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="font-extrabold text-xs text-[#0C262D]">
+                            {failureMapMode === "failure" ? "Point 2: VPC Direct Peering" : "Solution 2: Microsegmentation"}
+                          </span>
+                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase ${
+                            failureMapMode === "failure" ? "bg-rose-200 text-rose-900" : "bg-emerald-200 text-emerald-900"
+                          }`}>
+                            {failureMapMode === "failure" ? "LATERAL PATH" : "CONTAINED"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#164E63] font-medium leading-relaxed">
+                          {failureMapMode === "failure"
+                            ? "Unsegmented flat network route allowed lateral traversal straight from payment gateway into Customer PII Database."
+                            : "Zero-Trust microsegmentation & Just-In-Time ephemeral IAM prevents unauthorized lateral traversal into PII databases."}
+                        </p>
+                      </div>
+
+                      {/* Node C */}
+                      <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
+                        failureMapMode === "failure" ? "bg-rose-50/70 border-rose-300" : "bg-[#CBF1F5] border-2 border-[#71C9CE]"
+                      }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="font-extrabold text-xs text-[#0C262D]">
+                            {failureMapMode === "failure" ? "Point 3: AWS US-East-1 SPoF" : "Solution 3: Multi-Region Standby"}
+                          </span>
+                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase ${
+                            failureMapMode === "failure" ? "bg-rose-200 text-rose-900" : "bg-emerald-200 text-emerald-900"
+                          }`}>
+                            {failureMapMode === "failure" ? "CONCENTRATION SPoF" : "RESILIENT"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#164E63] font-medium leading-relaxed">
+                          {failureMapMode === "failure"
+                            ? "100% infrastructure dependency on single AWS region with no automated failover; caused 36-hour catastrophic outage."
+                            : "Active-Active warm standby in AWS US-West-2 with automated Route53 DNS health checks reduces failover window to 90 seconds."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Connection Line */}
+                  <div className="flex justify-center my-1">
+                    <div className={`w-0.5 h-6 border-l-2 border-dashed ${failureMapMode === "failure" ? "border-rose-400" : "border-[#71C9CE]"}`} />
+                  </div>
+
+                  {/* Tier 3: Impacted Assets */}
+                  <div>
+                    <div className="text-[11px] font-mono font-bold text-[#164E63] mb-2 uppercase">
+                      Impacted Core Enterprise Assets:
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="p-3.5 rounded-xl bg-white border border-[#A6E3E9] shadow-sm flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-xs text-[#0C262D]">Core Payment Gateway (API)</span>
+                          <span className="text-[11px] text-[#164E63] block">Criticality: 95% • Transaction Volume: $42M/day</span>
+                        </div>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                          failureMapMode === "failure" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
+                        }`}>
+                          {failureMapMode === "failure" ? "COMPROMISED" : "PROTECTED"}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-white border border-[#A6E3E9] shadow-sm flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-xs text-[#0C262D]">Customer Relational DB (PII)</span>
+                          <span className="text-[11px] text-[#164E63] block">Criticality: 100% • 145,000 Sensitive Records</span>
+                        </div>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                          failureMapMode === "failure" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
+                        }`}>
+                          {failureMapMode === "failure" ? "BREACH EXPOSURE" : "ZERO EXPOSURE"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Connection Line */}
+                  <div className="flex justify-center my-1">
+                    <div className={`w-0.5 h-6 border-l-2 border-dashed ${failureMapMode === "failure" ? "border-rose-400" : "border-[#71C9CE]"}`} />
+                  </div>
+
+                  {/* Tier 4: Cascading Financial Loss Impact Breakdown */}
+                  <div className="p-5 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono">
+                        {failureMapMode === "failure"
+                          ? "Cascading Financial Loss Attribution ($)"
+                          : "Optimal Financial Savings & ROSI Metrics ($)"}
+                      </h4>
+                      <span className="text-[10px] font-mono text-[#164E63] font-bold">OpenFAIR Quantified</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="p-3.5 bg-white rounded-xl border border-[#A6E3E9] shadow-sm">
+                        <span className="text-[10px] font-mono text-[#164E63] font-bold block">1. Forensics & Incident Response</span>
+                        <div className={`text-lg font-black font-mono mt-1 ${failureMapMode === "failure" ? "text-rose-700" : "text-emerald-800"}`}>
+                          {failureMapMode === "failure" ? "$850,000" : "$0 (100% Saved)"}
+                        </div>
+                        <span className="text-[10px] text-[#164E63] font-medium">IR retainers, forensic triage, and audit</span>
+                      </div>
+
+                      <div className="p-3.5 bg-white rounded-xl border border-[#A6E3E9] shadow-sm">
+                        <span className="text-[10px] font-mono text-[#164E63] font-bold block">2. Revenue Downtime (Interruption)</span>
+                        <div className={`text-lg font-black font-mono mt-1 ${failureMapMode === "failure" ? "text-rose-700" : "text-emerald-800"}`}>
+                          {failureMapMode === "failure" ? "$1,200,000" : "$15,000 (98.8% Saved)"}
+                        </div>
+                        <span className="text-[10px] text-[#164E63] font-medium">
+                          {failureMapMode === "failure" ? "36h total outage" : "90 seconds automated failover"}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 bg-white rounded-xl border border-[#A6E3E9] shadow-sm">
+                        <span className="text-[10px] font-mono text-[#164E63] font-bold block">3. Regulatory Fines (SEC & DORA)</span>
+                        <div className={`text-lg font-black font-mono mt-1 ${failureMapMode === "failure" ? "text-rose-700" : "text-emerald-800"}`}>
+                          {failureMapMode === "failure" ? "$500,000" : "$0 (Threshold Avoided)"}
+                        </div>
+                        <span className="text-[10px] text-[#164E63] font-medium">SEC Form 8-K disclosure penalty avoidance</span>
+                      </div>
+                    </div>
+
+                    {/* Summary Outcome Card */}
+                    <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm ${
+                      failureMapMode === "failure"
+                        ? "bg-rose-100 border-rose-300 text-rose-900"
+                        : "bg-emerald-100 border-emerald-300 text-emerald-950"
+                    }`}>
+                      <div>
+                        <span className="text-xs font-black uppercase font-mono block">
+                          {failureMapMode === "failure" ? "Total Single Event Failure Exposure" : "Net Optimized Outcome (Mitigated State)"}
+                        </span>
+                        <span className="text-xs font-medium">
+                          {failureMapMode === "failure"
+                            ? "Adds +$75,000 in continuous annual Expected Annual Loss (EAL)."
+                            : "Total Loss drops from $2,550,000 to $15,000. Slashes continuous EAL by -$75,000/year."}
+                        </span>
+                      </div>
+
+                      <div className="text-right shrink-0 font-mono">
+                        <div className="text-2xl font-black">
+                          {failureMapMode === "failure" ? "$2,550,000" : "$15,000"}
+                        </div>
+                        <span className="text-[11px] font-bold">
+                          {failureMapMode === "failure" ? "Uncontrolled Worst Case" : "ROSI: +520% • Payback: 1.8 Mo"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="p-5 bg-[#CBF1F5] border-t border-[#A6E3E9] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="text-xs text-[#164E63] font-mono">
+                  {failureMapMode === "failure" ? (
+                    <span>Click <strong>'Simulate Optimal Solution'</strong> to preview defense architecture.</span>
+                  ) : (
+                    <span>Optimal solution validated: <strong>WAF Virtual Patch + FIDO2 MFA + Multi-Region</strong></span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {failureMapMode === "failure" ? (
+                    <button
+                      onClick={() => setFailureMapMode("solution")}
+                      className="px-5 py-2.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-black text-xs transition-all shadow-md shadow-[#71C9CE]/30 border border-[#71C9CE] flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-4 h-4 text-[#042F2E]" />
+                      <span>Simulate Optimal Solution</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setFailureMapMode("failure")}
+                        className="px-4 py-2 rounded-xl bg-white border border-[#A6E3E9] text-[#164E63] text-xs font-bold hover:bg-[#E3FDFD]"
+                      >
+                        Back to Failure View
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          const target = findings.find((f) => !f.isPatched);
+                          if (target) {
+                            await handleRemediate(target.id);
+                          }
+                          setSolutionApplied(true);
+                          setTimeout(() => {
+                            setShowFailureMapModal(false);
+                            setSolutionApplied(false);
+                          }, 1500);
+                        }}
+                        disabled={solutionApplied}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{solutionApplied ? "Optimal Solution Applied!" : "Apply Solution to Live Portfolio Model"}</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
+

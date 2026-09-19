@@ -8,8 +8,8 @@ import { api, setActiveRole, setActiveOrgId } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("ciso@acme-fin.com");
+  const [password, setPassword] = useState("password123");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -160,9 +160,63 @@ export default function LoginPage() {
 
         {/* Traditional Credentials Form */}
         <form onSubmit={handleEmailLogin} className="bg-[#CBF1F5] border border-[#A6E3E9] p-6 rounded-2xl space-y-4 shadow-sm">
-          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[#083344]">
-            Or Sign In with Corporate Email
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[#083344]">
+              Or Sign In with Corporate Email & Password
+            </h2>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#71C9CE]/25 text-[#083344] font-bold border border-[#71C9CE]">
+              Demo Pass: password123
+            </span>
+          </div>
+
+          {/* Quick Demo Credentials Autofill Selector */}
+          <div className="p-3 rounded-xl bg-white border border-[#A6E3E9] space-y-2">
+            <span className="text-[11px] font-mono text-[#164E63] font-bold block">
+              Quick Autofill Demo Accounts (Click to Fill):
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("ciso@acme-fin.com");
+                  setPassword("password123");
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-[#CBF1F5] hover:bg-[#71C9CE] hover:text-[#042F2E] text-[#083344] border border-[#A6E3E9] text-[10px] font-mono font-bold transition-all text-center"
+              >
+                CISO Account
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("analyst@acme-fin.com");
+                  setPassword("password123");
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-[#CBF1F5] hover:bg-[#71C9CE] hover:text-[#042F2E] text-[#083344] border border-[#A6E3E9] text-[10px] font-mono font-bold transition-all text-center"
+              >
+                Analyst Account
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("auditor@compliance.com");
+                  setPassword("password123");
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-200 text-purple-900 border border-purple-200 text-[10px] font-mono font-bold transition-all text-center"
+              >
+                Auditor Account
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("admin@acme-fin.com");
+                  setPassword("password123");
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-200 text-emerald-900 border border-emerald-200 text-[10px] font-mono font-bold transition-all text-center"
+              >
+                Admin Account
+              </button>
+            </div>
+          </div>
 
           <div className="space-y-3">
             <div>
@@ -186,7 +240,8 @@ export default function LoginPage() {
                 <Lock className="w-4 h-4 text-[#164E63] absolute left-3 top-3" />
                 <input
                   type="password"
-                  placeholder="••••••••••••"
+                  required
+                  placeholder="password123"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-white border border-[#A6E3E9] rounded-xl text-sm text-[#0C262D] focus:outline-none focus:border-[#71C9CE] placeholder:text-[#164E63]/40"
