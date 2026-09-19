@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   ShieldAlert,
   BarChart3,
   Terminal,
+  LogOut,
   Plug,
   Scale,
   Settings,
@@ -65,7 +67,9 @@ type ActiveTab = "cockpit" | "analyst" | "connectors" | "auditor" | "admin";
 type MapTab = "failure" | "alert" | "log" | "solution";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [currentRole, setCurrentRole] = useState<Role>("ciso");
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("cockpit");
   const [org, setOrg] = useState<any>({ name: "Acme CyberFin Corp", plan: "enterprise" });
 
@@ -120,7 +124,20 @@ export default function DashboardPage() {
   const [inviteMsg, setInviteMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("aegis_token") : null;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
     const storedRole = (localStorage.getItem("aegis_role") as Role) || "ciso";
+    const storedUserStr = typeof window !== "undefined" ? localStorage.getItem("aegis_user") : null;
+    if (storedUserStr) {
+      try {
+        const u = JSON.parse(storedUserStr);
+        setCurrentUser(u);
+      } catch (e) {}
+    }
     setCurrentRole(storedRole);
     setActiveRole(storedRole);
 
@@ -131,6 +148,28 @@ export default function DashboardPage() {
 
     loadAllData();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("aegis_token");
+    localStorage.removeItem("aegis_role");
+    localStorage.removeItem("aegis_user");
+    localStorage.removeItem("aegis_org");
+    router.push("/login");
+  };
+
+  const userInitials = currentUser?.name
+    ? currentUser.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+    : currentRole === "ciso" ? "DC" : currentRole === "analyst" ? "MB" : currentRole === "auditor" ? "ER" : "SV";
+
+  const userDisplayName = currentUser?.name || (
+    currentRole === "ciso" ? "David Chen" :
+    currentRole === "analyst" ? "Marcus Brody" :
+    currentRole === "auditor" ? "Elena Rostova" : "Sarah Vance"
+  );
+
+  const userRoleTitle = currentRole === "ciso" ? "Chief Information Security Officer" :
+    currentRole === "analyst" ? "Lead Security Analyst" :
+    currentRole === "auditor" ? "Compliance Auditor" : "Organization Administrator";
 
   const loadAllData = async () => {
     setRecalculating(true);
@@ -312,11 +351,11 @@ export default function DashboardPage() {
     selectedConfidence === "90" ? metrics.var90 : selectedConfidence === "99" ? metrics.var99 : metrics.var95;
 
   const trendChartData = (overview?.history || []).map((h: any, idx: number) => {
-    const totalPoints = overview.history.length;
-    const dayLabel = `T-${(totalPoints - idx) * 3}d`;
+    const dayLabels = ["T-18d", "T-15d", "T-9d", "T-6d", "T-3d"];
+    const dayLabel = dayLabels[idx] || `T-${(5 - idx) * 3}d`;
     let incident: any = null;
 
-    if (dayLabel === "T-18d" || idx === 4) {
+    if (idx === 0) {
       incident = {
         type: "alert" as const,
         label: "🚨 Threat Alert ALT-9041: Pre-Auth RCE Infiltration",
@@ -324,7 +363,7 @@ export default function DashboardPage() {
         badge: "THREAT ALERT",
         color: "#E11D48",
       };
-    } else if (dayLabel === "T-15d" || idx === 5) {
+    } else if (idx === 1) {
       incident = {
         type: "failure" as const,
         label: "⚠️ System Failure: Blast Radius Spike ($27.3M)",
@@ -332,7 +371,7 @@ export default function DashboardPage() {
         badge: "SYSTEM FAILURE",
         color: "#EA580C",
       };
-    } else if (dayLabel === "T-9d" || idx === 7) {
+    } else if (idx === 2) {
       incident = {
         type: "log" as const,
         label: "📋 SIEM Log: Lateral VPC Data Exfiltration",
@@ -340,7 +379,7 @@ export default function DashboardPage() {
         badge: "LOG ANOMALY",
         color: "#0284C7",
       };
-    } else if (dayLabel === "T-3d" || idx === totalPoints - 1) {
+    } else if (idx === 4) {
       incident = {
         type: "solution" as const,
         label: "✨ Simulated Defense: Virtual Patch & Standby",
@@ -408,98 +447,144 @@ export default function DashboardPage() {
               <RefreshCw className={`w-4 h-4 ${recalculating ? "animate-spin text-[#083344]" : ""}`} />
             </button>
 
-            {/* Persona / Role Switcher Dropdown */}
-            <div className="flex items-center space-x-2 pl-2 border-l border-[#A6E3E9]">
-              <span className="text-xs text-[#164E63] font-mono font-bold">Active Role:</span>
-              <select
-                value={currentRole}
-                onChange={(e) => handleRoleChange(e.target.value as Role)}
-                className={`text-xs font-bold rounded-xl px-3 py-1.5 border focus:outline-none cursor-pointer shadow-sm ${
-                  currentRole === "auditor"
-                    ? "bg-purple-100 border-purple-300 text-purple-900"
-                    : currentRole === "analyst"
-                    ? "bg-white border-[#71C9CE] text-[#083344]"
-                    : currentRole === "admin"
-                    ? "bg-emerald-100 border-emerald-300 text-emerald-900"
-                    : "bg-[#71C9CE] border-[#71C9CE] text-[#042F2E]"
-                }`}
+            {/* Authenticated Corporate User Profile & Sign Out */}
+            <div className="flex items-center space-x-3 pl-3 border-l border-[#A6E3E9]">
+              <div className="w-8 h-8 rounded-xl bg-[#71C9CE] text-[#042F2E] font-black text-xs flex items-center justify-center border border-[#A6E3E9] shadow-sm">
+                {userInitials}
+              </div>
+              <div className="hidden sm:block text-left">
+                <div className="text-xs font-extrabold text-[#0C262D] leading-tight">
+                  {userDisplayName}
+                </div>
+                <div className="text-[10px] font-mono text-[#164E63] font-bold">
+                  {userRoleTitle}
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 text-[#164E63] text-xs font-mono font-bold border border-[#A6E3E9] transition-all flex items-center gap-1 shadow-sm"
+                title="Sign Out of Corporate Session"
               >
-                <option value="ciso" className="bg-white text-[#0C262D]">CISO (Executive Cockpit)</option>
-                <option value="analyst" className="bg-white text-[#0C262D]">Security Analyst (Queue)</option>
-                <option value="auditor" className="bg-white text-[#0C262D]">Auditor (Read-Only)</option>
-                <option value="admin" className="bg-white text-[#0C262D]">Admin (Connectors & Team)</option>
-              </select>
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Sign Out</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Workspace Tab Bar */}
+        {/* Workspace Tab Bar - Strictly Filtered to Authorized Role */}
         <div className="max-w-7xl mx-auto px-6 flex items-center gap-2 border-t border-[#A6E3E9]/60 overflow-x-auto text-xs font-bold py-1">
-          <button
-            onClick={() => setActiveTab("cockpit")}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
-              activeTab === "cockpit"
-                ? "bg-[#71C9CE] text-[#042F2E] shadow-sm border border-[#71C9CE]"
-                : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Executive Cockpit (CISO)</span>
-          </button>
+          {currentRole === "ciso" && (
+            <>
+              <button
+                onClick={() => setActiveTab("cockpit")}
+                className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
+                  activeTab === "cockpit"
+                    ? "bg-[#71C9CE] text-[#042F2E] shadow-sm border border-[#71C9CE]"
+                    : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Executive Risk Cockpit</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab("analyst")}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
-              activeTab === "analyst"
-                ? "bg-[#71C9CE] text-[#042F2E] shadow-sm border border-[#71C9CE]"
-                : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
-            }`}
-          >
-            <Terminal className="w-3.5 h-3.5" />
-            <span>Analyst Queue ({findings.filter((f) => !f.isPatched).length})</span>
-          </button>
+              <button
+                onClick={() => {
+                  setActiveTab("cockpit");
+                  const el = document.getElementById("what-if-section");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="px-3 py-2 rounded-lg flex items-center gap-1.5 text-[#164E63] hover:text-[#0C262D] hover:bg-white/60 transition-all"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>What-If ROSI Simulator</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab("connectors")}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
-              activeTab === "connectors"
-                ? "bg-[#71C9CE] text-[#042F2E] shadow-sm border border-[#71C9CE]"
-                : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
-            }`}
-          >
-            <Plug className="w-3.5 h-3.5" />
-            <span>Connect Tools (5 Categories)</span>
-          </button>
+              <button
+                onClick={() => {
+                  setActiveTab("cockpit");
+                  const el = document.getElementById("closed-loop-section");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="px-3 py-2 rounded-lg flex items-center gap-1.5 text-[#164E63] hover:text-[#0C262D] hover:bg-white/60 transition-all"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Closed-Loop Model Assurance</span>
+              </button>
+            </>
+          )}
 
-          <button
-            onClick={() => setActiveTab("auditor")}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
-              activeTab === "auditor"
-                ? "bg-purple-600 text-white shadow-sm border border-purple-600"
-                : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
-            }`}
-          >
-            <Scale className="w-3.5 h-3.5" />
-            <span>Regulatory & Audit Trail</span>
-          </button>
+          {currentRole === "analyst" && (
+            <>
+              <button
+                onClick={() => setActiveTab("analyst")}
+                className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
+                  activeTab === "analyst"
+                    ? "bg-[#71C9CE] text-[#042F2E] shadow-sm border border-[#71C9CE]"
+                    : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
+                }`}
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>Vulnerability Triage Queue ({findings.filter((f) => !f.isPatched).length})</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab("admin")}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
-              activeTab === "admin"
-                ? "bg-emerald-600 text-white shadow-sm border border-emerald-600"
-                : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
-            }`}
-          >
-            <Settings className="w-3.5 h-3.5" />
-            <span>Admin & Team</span>
-          </button>
+              <button
+                onClick={() => setActiveTab("connectors")}
+                className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
+                  activeTab === "connectors"
+                    ? "bg-[#71C9CE] text-[#042F2E] shadow-sm border border-[#71C9CE]"
+                    : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
+                }`}
+              >
+                <Plug className="w-3.5 h-3.5" />
+                <span>Telemetry Ingestion & Scanners</span>
+              </button>
+            </>
+          )}
+
+          {currentRole === "auditor" && (
+            <button
+              onClick={() => setActiveTab("auditor")}
+              className="px-3 py-2 rounded-lg flex items-center gap-1.5 bg-purple-600 text-white shadow-sm border border-purple-600 font-bold"
+            >
+              <Scale className="w-3.5 h-3.5" />
+              <span>Regulatory Assurance & Cryptographic Audit Logs (SEC 8-K / DORA)</span>
+            </button>
+          )}
+
+          {currentRole === "admin" && (
+            <>
+              <button
+                onClick={() => setActiveTab("admin")}
+                className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
+                  activeTab === "admin"
+                    ? "bg-emerald-600 text-white shadow-sm border border-emerald-600"
+                    : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
+                }`}
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Tenant Administration & RBAC</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("connectors")}
+                className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${
+                  activeTab === "connectors"
+                    ? "bg-[#71C9CE] text-[#042F2E] shadow-sm border border-[#71C9CE]"
+                    : "text-[#164E63] hover:text-[#0C262D] hover:bg-white/60"
+                }`}
+              >
+                <Plug className="w-3.5 h-3.5" />
+                <span>Connect Security Tools</span>
+              </button>
+            </>
+          )}
         </div>
       </header>
 
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 space-y-8">
-        {/* Persona Context & Role Focus Banner */}
+        {/* Real Corporate Executive Banner (No Demo Switchers) */}
         <div className="p-5 rounded-2xl bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#71C9CE] flex items-center justify-center text-[#042F2E] font-black shrink-0 border border-[#A6E3E9] shadow-sm">
@@ -510,23 +595,18 @@ export default function DashboardPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#083344]">
-                  {currentRole === "ciso" && "CISO Workspace — David Chen"}
-                  {currentRole === "analyst" && "Lead Security Analyst Workspace — Marcus Brody"}
-                  {currentRole === "auditor" && "Regulatory Compliance Auditor — Elena Rostova"}
-                  {currentRole === "admin" && "Organization Admin Workspace — Sarah Vance"}
+                <span className="text-sm font-extrabold text-[#0C262D]">
+                  {currentRole === "ciso" && "Executive Risk & Capital Allocation Cockpit"}
+                  {currentRole === "analyst" && "Vulnerability Risk Prioritization & Triage"}
+                  {currentRole === "auditor" && "Independent Regulatory Assurance & Cryptographic Audit"}
+                  {currentRole === "admin" && "Enterprise Tenant Administration & Security Connectors"}
                 </span>
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-extrabold border ${
-                  currentRole === "auditor" ? "bg-purple-100 text-purple-900 border-purple-300" :
-                  currentRole === "analyst" ? "bg-white text-[#083344] border-[#71C9CE]" :
-                  currentRole === "admin" ? "bg-emerald-100 text-emerald-900 border-emerald-300" :
-                  "bg-[#71C9CE] text-[#042F2E] border-[#71C9CE]"
-                }`}>
-                  {currentRole.toUpperCase()} MODE ACTIVE
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded font-extrabold bg-white text-[#083344] border border-[#71C9CE]">
+                  SOC2 TYPE II • LIVE
                 </span>
               </div>
               <p className="text-xs text-[#164E63] mt-1 font-medium">
-                {currentRole === "ciso" && "Strategic financial risk quantification, 95% tail VaR, ROSI capital allocation, and root-cause failure blast radius inspection."}
+                {currentRole === "ciso" && "Real-time OpenFAIR quantification, 95% tail VaR, and root-cause failure blast radius modeling for Acme CyberFin Corp."}
                 {currentRole === "analyst" && "Tactical vulnerability triage prioritized by financial loss ($), active CISA KEV exploitation, asset criticality weights, and 1-click remediation."}
                 {currentRole === "auditor" && "Independent compliance assurance. SEC Form 8-K Item 1.05 4-Day materiality evaluation, DORA Art. 16 concentration risk, and cryptographic audit log."}
                 {currentRole === "admin" && "Configure live API connectors, ingest manual CSV/SIEM telemetry feeds, and manage organization teammates and RBAC roles."}
@@ -534,29 +614,18 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Quick 1-Click Role Switcher Buttons */}
-          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-            <span className="text-[10px] font-mono font-bold text-[#164E63] mr-1">Switch View:</span>
-            {(["ciso", "analyst", "auditor", "admin"] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => handleRoleChange(r)}
-                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold font-mono transition-all border ${
-                  currentRole === r
-                    ? "bg-[#71C9CE] text-[#042F2E] border-[#71C9CE] shadow-sm ring-2 ring-[#71C9CE]/40 font-black"
-                    : "bg-white text-[#164E63] border-[#A6E3E9] hover:bg-[#E3FDFD]"
-                }`}
-              >
-                {r.toUpperCase()}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="px-3 py-1.5 rounded-xl bg-white border border-[#A6E3E9] text-[11px] font-mono text-[#083344] font-bold shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Production Pipeline Active</span>
+            </div>
           </div>
         </div>
 
         {/* ============================================================ */}
         {/* TAB 1: EXECUTIVE COCKPIT (CISO)                              */}
         {/* ============================================================ */}
-        {activeTab === "cockpit" && (
+        {activeTab === "cockpit" && (currentRole === "ciso" || currentRole === "admin") && (
           <div className="space-y-6">
             {/* Headline KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -784,9 +853,12 @@ export default function DashboardPage() {
                       strokeWidth={2.5}
                       name="95% VaR"
                       dot={(props: any) => {
-                        const { cx, cy, payload } = props;
+                        const { cx, cy, payload, index } = props;
                         if (!payload?.incident) return <g key={`dot-empty-${payload?.name}`} />;
                         const inc = payload.incident;
+                        const isLast = index === trendChartData.length - 1;
+                        const isFirst = index === 0;
+                        const badgeOffsetX = isLast ? cx - 74 : isFirst ? cx - 4 : cx - 36;
                         return (
                           <g
                             key={`inc-dot-${payload.name}`}
@@ -799,7 +871,7 @@ export default function DashboardPage() {
                             }}
                           >
                             {/* Generous Clickable Hit Target */}
-                            <circle cx={cx} cy={cy} r={20} fill="transparent" />
+                            <circle cx={cx} cy={cy} r={22} fill="transparent" />
 
                             {/* Pulsing Radar Ring */}
                             <circle
@@ -827,9 +899,9 @@ export default function DashboardPage() {
                             <circle cx={cx} cy={cy} r={3} fill="#ffffff" />
 
                             {/* Interactive Floating Badge Tag */}
-                            <g transform={`translate(${cx - 30}, ${cy - 26})`}>
+                            <g transform={`translate(${badgeOffsetX}, ${cy - 26})`}>
                               <rect
-                                width={60}
+                                width={72}
                                 height={18}
                                 rx={9}
                                 fill="#0C262D"
@@ -838,7 +910,7 @@ export default function DashboardPage() {
                                 className="shadow-md"
                               />
                               <text
-                                x={30}
+                                x={36}
                                 y={12}
                                 textAnchor="middle"
                                 fill="#ffffff"
@@ -1033,7 +1105,7 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {/* TAB 2: ANALYST QUEUE (SECURITY ANALYST)                      */}
         {/* ============================================================ */}
-        {activeTab === "analyst" && (
+        {activeTab === "analyst" && (currentRole === "analyst" || currentRole === "admin") && (
           <div className="space-y-6">
             {/* Analyst Tactical KPI Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -1243,7 +1315,7 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {/* TAB 3: CONNECT YOUR TOOLS (CONNECTORS HUB)                   */}
         {/* ============================================================ */}
-        {activeTab === "connectors" && (
+        {activeTab === "connectors" && (currentRole === "analyst" || currentRole === "admin") && (
           <div className="space-y-6">
             <div className="p-5 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] shadow-sm">
               <h2 className="text-base font-extrabold text-[#0C262D]">Step 3 — Connect Your Security Tools</h2>
@@ -1462,7 +1534,7 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {/* TAB 4: COMPLIANCE & AUDIT TRAIL (AUDITOR)                    */}
         {/* ============================================================ */}
-        {activeTab === "auditor" && (
+        {activeTab === "auditor" && (currentRole === "auditor" || currentRole === "admin") && (
           <div className="space-y-6">
             {/* Read-Only Assurance Notice */}
             <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-between text-xs shadow-sm">
@@ -1588,7 +1660,7 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {/* TAB 5: ADMIN & TEAM MANAGEMENT                               */}
         {/* ============================================================ */}
-        {activeTab === "admin" && (
+        {activeTab === "admin" && currentRole === "admin" && (
           <div className="space-y-6">
             <div className="p-5 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] shadow-sm">
               <h2 className="text-base font-extrabold text-[#0C262D]">Step 2 — Invite Teammates & Assign Roles</h2>
