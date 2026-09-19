@@ -90,7 +90,7 @@ export default function LandingPage() {
               href="/dashboard"
               className="px-4 py-2 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs transition-all shadow-md shadow-[#71C9CE]/25 flex items-center gap-1.5 border border-[#71C9CE]"
             >
-              <span>Live Cockpit Demo</span>
+              <span>Launch Live Platform</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </nav>
@@ -124,14 +124,14 @@ export default function LandingPage() {
               href="/signup"
               className="px-6 py-3.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-sm transition-all shadow-lg shadow-[#71C9CE]/30 flex items-center gap-2 border border-[#71C9CE]"
             >
-              <span>Create Free Tenant Organization</span>
+              <span>Create Tenant Organization</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/dashboard"
               className="px-6 py-3.5 rounded-xl bg-[#CBF1F5] hover:bg-white text-[#0C262D] border border-[#A6E3E9] font-bold text-sm transition-all hover:border-[#71C9CE] flex items-center gap-2 shadow-sm"
             >
-              <span>Explore Preloaded Demo Persona</span>
+              <span>Enter Corporate Cockpit</span>
             </Link>
           </div>
         </div>

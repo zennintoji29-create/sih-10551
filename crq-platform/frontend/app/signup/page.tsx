@@ -102,9 +102,9 @@ export default function SignupPage() {
             </div>
             <span className="text-[#0C262D]">AegisRisk AI</span>
           </Link>
-          <h1 className="text-3xl font-extrabold text-[#0C262D] mt-3">Step 1 — Create Your Tenant Organization</h1>
+          <h1 className="text-3xl font-extrabold text-[#0C262D] mt-3">Create Your Tenant Organization</h1>
           <p className="text-sm text-[#164E63] mt-1 font-medium">
-            Isolated tenant partition with role-based access control and plan-gated connectors.
+            Provision an isolated tenant partition with continuous telemetry and quantitative risk modeling.
           </p>
         </div>
 
@@ -203,7 +203,7 @@ export default function SignupPage() {
                   <User className="w-4 h-4 text-[#164E63] absolute left-3 top-3" />
                   <input
                     type="text"
-                    placeholder="Sarah Vance"
+                    placeholder="Full Name"
                     value={adminName}
                     onChange={(e) => setAdminName(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-white border border-[#A6E3E9] rounded-xl text-sm text-[#0C262D] focus:outline-none focus:border-[#71C9CE] placeholder:text-[#164E63]/40"
@@ -218,7 +218,7 @@ export default function SignupPage() {
                   <input
                     type="email"
                     required
-                    placeholder="sarah@acme-corp.com"
+                    placeholder="name@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-white border border-[#A6E3E9] rounded-xl text-sm text-[#0C262D] focus:outline-none focus:border-[#71C9CE] placeholder:text-[#164E63]/40"
@@ -232,6 +232,7 @@ export default function SignupPage() {
                   <Lock className="w-4 h-4 text-[#164E63] absolute left-3 top-3" />
                   <input
                     type="password"
+                    required
                     placeholder="••••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

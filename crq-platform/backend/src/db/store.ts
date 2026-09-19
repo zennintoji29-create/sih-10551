@@ -166,9 +166,16 @@ class DataStore {
     this.seedInitialTenants();
   }
 
+  public normalizeOrgId(orgId?: string): string {
+    if (!orgId || orgId === "org-aegis-demo" || orgId === "org-aegis-prod") {
+      return "org-aegis-prod";
+    }
+    return orgId;
+  }
+
   // --- Seed Initial Organizations ---
   private seedInitialTenants() {
-    const orgId = "org-aegis-demo";
+    const orgId = "org-aegis-prod";
     const org: Organization = {
       id: orgId,
       name: "Acme CyberFin Corp",
@@ -177,6 +184,7 @@ class DataStore {
       createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
     };
     this.orgs.set(orgId, org);
+    this.orgs.set("org-aegis-demo", { ...org, id: "org-aegis-demo" });
 
     // Initial Users
     const users: User[] = [
@@ -185,7 +193,9 @@ class DataStore {
       { id: "u-analyst", orgId, email: "analyst@acme-fin.com", name: "Marcus Brody (Analyst)", role: "analyst", createdAt: org.createdAt },
       { id: "u-auditor", orgId, email: "auditor@compliance.com", name: "Elena Rostova (Auditor)", role: "auditor", createdAt: org.createdAt },
     ];
-    for (const u of users) this.users.set(u.id, u);
+    for (const u of users) {
+      this.users.set(u.id, u);
+    }
 
     // Initial Assets
     const initialAssets: AssetRecord[] = [
@@ -571,7 +581,7 @@ class DataStore {
   // --- Multi-Tenant Accessors & Operations ---
 
   getOrg(orgId: string): Organization | undefined {
-    return this.orgs.get(orgId);
+    return this.orgs.get(this.normalizeOrgId(orgId));
   }
 
   createOrg(name: string, domain: string, plan: PlanTier = "starter"): Organization {
@@ -623,111 +633,117 @@ class DataStore {
   }
 
   getUsersForOrg(orgId: string): User[] {
-    return Array.from(this.users.values()).filter((u) => u.orgId === orgId);
+    const target = this.normalizeOrgId(orgId);
+    return Array.from(this.users.values()).filter((u) => this.normalizeOrgId(u.orgId) === target);
   }
 
   createUser(orgId: string, email: string, name: string, role: Role): User {
+    const targetOrgId = this.normalizeOrgId(orgId);
     const id = "u-" + crypto.randomBytes(4).toString("hex");
     const user: User = {
       id,
-      orgId,
+      orgId: targetOrgId,
       email,
       name,
       role,
       createdAt: new Date().toISOString(),
     };
     this.users.set(id, user);
-    this.addAuditLog(orgId, "admin", "admin", "USER_INVITE", `Invited user ${email} with role ${role.toUpperCase()}`, ["SEC Item 106(b)", "DORA Art. 5"]);
+    this.addAuditLog(targetOrgId, "admin", "admin", "USER_INVITE", `Invited user ${email} with role ${role.toUpperCase()}`, ["SEC Item 106(b)", "DORA Art. 5"]);
     return user;
   }
 
   updateUserRole(orgId: string, userId: string, newRole: Role, actor: string): User | undefined {
+    const targetOrgId = this.normalizeOrgId(orgId);
     const user = this.users.get(userId);
-    if (!user || user.orgId !== orgId) return undefined;
+    if (!user || this.normalizeOrgId(user.orgId) !== targetOrgId) return undefined;
     const oldRole = user.role;
     user.role = newRole;
-    this.addAuditLog(orgId, actor, "admin", "USER_ROLE_UPDATE", `Changed role for ${user.email} from ${oldRole} to ${newRole}`, ["SEC Item 106(b)"]);
+    this.addAuditLog(targetOrgId, actor, "admin", "USER_ROLE_UPDATE", `Changed role for ${user.email} from ${oldRole} to ${newRole}`, ["SEC Item 106(b)"]);
     return user;
   }
 
   // --- Assets ---
   getAssets(orgId: string): AssetRecord[] {
-    return this.assets.get(orgId) ?? [];
+    return this.assets.get(this.normalizeOrgId(orgId)) ?? [];
   }
 
   saveAsset(orgId: string, asset: Omit<AssetRecord, "id" | "orgId" | "createdAt">, assetId?: string): AssetRecord {
-    const list = this.assets.get(orgId) ?? [];
+    const targetOrgId = this.normalizeOrgId(orgId);
+    const list = this.assets.get(targetOrgId) ?? [];
     if (assetId) {
       const idx = list.findIndex((a) => a.id === assetId);
       if (idx >= 0) {
         list[idx] = { ...list[idx], ...asset };
-        this.assets.set(orgId, list);
+        this.assets.set(targetOrgId, list);
         return list[idx];
       }
     }
     const newAsset: AssetRecord = {
       id: "ast-" + crypto.randomBytes(4).toString("hex"),
-      orgId,
+      orgId: targetOrgId,
       ...asset,
       createdAt: new Date().toISOString(),
     };
     list.push(newAsset);
-    this.assets.set(orgId, list);
+    this.assets.set(targetOrgId, list);
     return newAsset;
   }
 
   // --- Findings ---
   getFindings(orgId: string): Finding[] {
-    return this.findings.get(orgId) ?? [];
+    return this.findings.get(this.normalizeOrgId(orgId)) ?? [];
   }
 
   saveFindings(orgId: string, newFindings: Finding[]) {
-    this.findings.set(orgId, newFindings);
+    this.findings.set(this.normalizeOrgId(orgId), newFindings);
   }
 
   // --- SIEM ---
   getSiem(orgId: string): SiemEventSummary | undefined {
-    return this.siem.get(orgId);
+    return this.siem.get(this.normalizeOrgId(orgId));
   }
 
   saveSiem(orgId: string, summary: SiemEventSummary) {
-    this.siem.set(orgId, summary);
+    this.siem.set(this.normalizeOrgId(orgId), summary);
   }
 
   // --- Threat Intel ---
   getThreatIntel(orgId: string): ThreatIntelFeed[] {
-    return this.threatIntel.get(orgId) ?? [];
+    return this.threatIntel.get(this.normalizeOrgId(orgId)) ?? [];
   }
 
   // --- Vendors ---
   getVendors(orgId: string): VendorRecord[] {
-    return this.vendors.get(orgId) ?? [];
+    return this.vendors.get(this.normalizeOrgId(orgId)) ?? [];
   }
 
   saveVendors(orgId: string, vendors: VendorRecord[]) {
-    this.vendors.set(orgId, vendors);
+    this.vendors.set(this.normalizeOrgId(orgId), vendors);
   }
 
   // --- Controls ---
   getControls(orgId: string): ControlRecord[] {
-    return this.controls.get(orgId) ?? [];
+    return this.controls.get(this.normalizeOrgId(orgId)) ?? [];
   }
 
   saveControl(orgId: string, control: Omit<ControlRecord, "id" | "orgId" | "createdAt">): ControlRecord {
-    const list = this.controls.get(orgId) ?? [];
+    const targetOrgId = this.normalizeOrgId(orgId);
+    const list = this.controls.get(targetOrgId) ?? [];
     const newControl: ControlRecord = {
       id: "ctrl-" + crypto.randomBytes(4).toString("hex"),
-      orgId,
+      orgId: targetOrgId,
       ...control,
       createdAt: new Date().toISOString(),
     };
     list.push(newControl);
-    this.controls.set(orgId, list);
+    this.controls.set(targetOrgId, list);
     return newControl;
   }
 
   deployControl(orgId: string, controlId: string, observedReduction?: number): ControlRecord | undefined {
-    const list = this.controls.get(orgId) ?? [];
+    const targetOrgId = this.normalizeOrgId(orgId);
+    const list = this.controls.get(targetOrgId) ?? [];
     const ctrl = list.find((c) => c.id === controlId);
     if (!ctrl) return undefined;
     ctrl.deployedAt = new Date().toISOString();
@@ -739,15 +755,16 @@ class DataStore {
 
   // --- Connectors ---
   getConnectors(orgId: string): ConnectorInfo[] {
-    const map = this.connectors.get(orgId);
+    const map = this.connectors.get(this.normalizeOrgId(orgId));
     return map ? Array.from(map.values()) : [];
   }
 
   updateConnector(orgId: string, category: DataSourceCategory, update: Partial<ConnectorInfo>): ConnectorInfo {
-    let map = this.connectors.get(orgId);
+    const targetOrgId = this.normalizeOrgId(orgId);
+    let map = this.connectors.get(targetOrgId);
     if (!map) {
       map = new Map();
-      this.connectors.set(orgId, map);
+      this.connectors.set(targetOrgId, map);
     }
     const current = map.get(category) ?? {
       category,
@@ -766,7 +783,7 @@ class DataStore {
 
   // --- Audit Logs ---
   getAuditLogs(orgId: string): AuditLogEntry[] {
-    return this.auditLogs.get(orgId) ?? [];
+    return this.auditLogs.get(this.normalizeOrgId(orgId)) ?? [];
   }
 
   addAuditLog(
@@ -777,10 +794,11 @@ class DataStore {
     details: string,
     regulatoryFrameworks: string[] = ["SEC Item 106", "DORA Art. 6"]
   ): AuditLogEntry {
-    const list = this.auditLogs.get(orgId) ?? [];
+    const targetOrgId = this.normalizeOrgId(orgId);
+    const list = this.auditLogs.get(targetOrgId) ?? [];
     const entry: AuditLogEntry = {
       id: "aud-" + crypto.randomBytes(4).toString("hex"),
-      orgId,
+      orgId: targetOrgId,
       actor,
       actorRole,
       action,
@@ -789,25 +807,26 @@ class DataStore {
       timestamp: new Date().toISOString(),
     };
     list.unshift(entry); // newest first
-    this.auditLogs.set(orgId, list);
+    this.auditLogs.set(targetOrgId, list);
     return entry;
   }
 
   // --- Snapshots & Recalculation ---
   getSnapshots(orgId: string): RiskSnapshot[] {
-    return this.snapshots.get(orgId) ?? [];
+    return this.snapshots.get(this.normalizeOrgId(orgId)) ?? [];
   }
 
   addSnapshot(orgId: string, snapshot: Omit<RiskSnapshot, "id" | "orgId" | "timestamp">): RiskSnapshot {
-    const list = this.snapshots.get(orgId) ?? [];
+    const targetOrgId = this.normalizeOrgId(orgId);
+    const list = this.snapshots.get(targetOrgId) ?? [];
     const newSnapshot: RiskSnapshot = {
       id: "snp-" + crypto.randomBytes(4).toString("hex"),
-      orgId,
+      orgId: targetOrgId,
       timestamp: new Date().toISOString(),
       ...snapshot,
     };
     list.push(newSnapshot);
-    this.snapshots.set(orgId, list);
+    this.snapshots.set(targetOrgId, list);
     return newSnapshot;
   }
 }

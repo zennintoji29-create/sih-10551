@@ -1788,10 +1788,10 @@ export default function DashboardPage() {
                     <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 space-y-1 shadow-sm">
                       <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
                         <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
-                        <span>System Architecture Failure State: 3 Breakdown Points Causing $2.55M Cascading Loss</span>
+                        <span>System Failure Detected • Blast Radius & Root Cause Map</span>
                       </div>
-                      <p className="text-xs text-rose-800 font-medium">
-                        Akira Ransomware Syndicate leveraged unpatched Pre-Auth RCE (CVE-2024-55591) on Bastion Ingress. Lack of hardware FIDO2 MFA allowed instant privilege escalation, permissive VPC peering enabled lateral egress into RDS PostgreSQL, and an AWS US-East-1 SPoF locked the company into an uncontrolled 36-hour outage.
+                      <p className="text-xs text-rose-800 font-medium leading-relaxed">
+                        System failure detected. The blast radius map visualizes the impact; initial assessment points towards a database connection issue, potentially cascading to dependent services. Further investigation confirms the root cause within the failure map below (pool depletion, SPoF lock, and lateral access causing $2.55M cascading loss).
                       </p>
                     </div>
 
@@ -1995,14 +1995,14 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
                           <Zap className="w-4 h-4 text-amber-700" />
-                          <span>Active Threat Alert Feed & IOC Vector Correlation</span>
+                          <span>Security Threat Alert Triggered • Attack Vector Map</span>
                         </div>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-extrabold">
                           4 CORRELATED ALERTS
                         </span>
                       </div>
-                      <p className="text-xs text-amber-900 font-medium">
-                        Live detection telemetry aggregated from CrowdStrike Falcon, AWS GuardDuty, and Splunk Enterprise Security matching the Akira/FIN7 intrusion campaign.
+                      <p className="text-xs text-amber-900 font-medium leading-relaxed">
+                        Security threat alert triggered. The vector map highlights a suspicious login attempt originating from an unknown geographical location (Tor exit node / anonymous proxy). Analyzing the network traffic and security logs to determine the specific attack vector. A potential brute-force attack is suspected.
                       </p>
                     </div>
 
@@ -2219,15 +2219,15 @@ export default function DashboardPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
                           <Terminal className="w-4 h-4 text-sky-700" />
-                          <span>Forensic Telemetry Stream & Chronological Audit Trail</span>
+                          <span>Forensic SIEM Log Activity & Audit Telemetry Trace</span>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-sky-800">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                           <span>SHA256 Cryptographic Immutability Seal Verified</span>
                         </div>
                       </div>
-                      <p className="text-xs text-sky-900 font-medium">
-                        Continuous telemetry logs ingested across VPC Flow Logs, host-level Auditd, AWS CloudTrail, and PostgreSQL query logs during the incident timeline.
+                      <p className="text-xs text-sky-900 font-medium leading-relaxed">
+                        Forensic SIEM log activity reveals a series of unauthorized file access attempts. The audit telemetry trace shows anomalous user behavior after authentication. This activity correlates with the earlier security alert, pointing to a potential compromise.
                       </p>
                     </div>
 
@@ -2393,10 +2393,10 @@ export default function DashboardPage() {
                     <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-400 text-emerald-950 space-y-1 shadow-sm">
                       <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
                         <Sparkles className="w-4 h-4 text-emerald-700" />
-                        <span>Optimal Security Architecture: Defense-in-Depth Eliminates 99.4% of Financial Loss</span>
+                        <span>Simulated Optimal Security Architecture & Solution Map</span>
                       </div>
-                      <p className="text-xs text-emerald-900 font-medium">
-                        Automated WAF edge virtual patching blocks RCE exploits in 0ms, FIDO2 WebAuthn zero-trust eliminates credential replay attacks, and multi-region active-active standby in US-West-2 reduces downtime from 36 hours to under 90 seconds.
+                      <p className="text-xs text-emerald-900 font-medium leading-relaxed">
+                        A simulated optimal security architecture is generated based on identified vulnerabilities. The solution map proposes isolating the compromised system and applying access control. The map will provide a one-click live application of the proposed security configuration.
                       </p>
                     </div>
 

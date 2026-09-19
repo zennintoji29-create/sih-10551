@@ -1,7 +1,7 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 let activeRole: string = "ciso";
-let activeOrgId: string = "org-aegis-demo";
+let activeOrgId: string = "org-aegis-prod";
 
 export function setActiveRole(role: string) {
   if (role) {
@@ -27,7 +27,7 @@ function getHeaders() {
   const storedOrg = typeof window !== "undefined" ? localStorage.getItem("aegis_org_id") : null;
 
   const currentRole = (storedRole || activeRole || "ciso").toLowerCase();
-  const currentOrg = storedOrg || activeOrgId || "org-aegis-demo";
+  const currentOrg = storedOrg || activeOrgId || "org-aegis-prod";
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
