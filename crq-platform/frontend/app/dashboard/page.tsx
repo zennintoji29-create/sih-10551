@@ -38,6 +38,17 @@ import {
   Crosshair,
   Filter,
   ArrowUpDown,
+  Radio,
+  FileText,
+  Database,
+  Network,
+  Flame,
+  Search,
+  Code,
+  Clock,
+  ExternalLink,
+  ShieldOff,
+  Cpu,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -51,6 +62,7 @@ import { api, setActiveRole, setActiveOrgId } from "@/lib/api";
 
 type Role = "admin" | "ciso" | "analyst" | "auditor";
 type ActiveTab = "cockpit" | "analyst" | "connectors" | "auditor" | "admin";
+type MapTab = "failure" | "alert" | "log" | "solution";
 
 export default function DashboardPage() {
   const [currentRole, setCurrentRole] = useState<Role>("ciso");
@@ -78,9 +90,11 @@ export default function DashboardPage() {
 
   // Root-cause failure & loss map modal state
   const [showFailureMapModal, setShowFailureMapModal] = useState(false);
-  const [failureMapMode, setFailureMapMode] = useState<"failure" | "solution">("failure");
+  const [failureMapMode, setFailureMapMode] = useState<MapTab>("failure");
   const [selectedPointLabel, setSelectedPointLabel] = useState("T-0 (Current Incident)");
   const [solutionApplied, setSolutionApplied] = useState(false);
+  const [activeAlertId, setActiveAlertId] = useState<string>("ALT-9041");
+  const [logFilter, setLogFilter] = useState<"all" | "vpc" | "auth" | "iam" | "db">("all");
 
   // Analyst view sorting & filtering
   const [analystSortBy, setAnalystSortBy] = useState<"financialImpact" | "cvss">("financialImpact");
@@ -297,11 +311,52 @@ export default function DashboardPage() {
   const currentVaR =
     selectedConfidence === "90" ? metrics.var90 : selectedConfidence === "99" ? metrics.var99 : metrics.var95;
 
-  const trendChartData = (overview?.history || []).map((h: any, idx: number) => ({
-    name: `T-${(overview.history.length - idx) * 3}d`,
-    eal: Math.round((h.portfolioEal / 1e6) * 100) / 100,
-    var95: Math.round((h.var95 / 1e6) * 100) / 100,
-  }));
+  const trendChartData = (overview?.history || []).map((h: any, idx: number) => {
+    const totalPoints = overview.history.length;
+    const dayLabel = `T-${(totalPoints - idx) * 3}d`;
+    let incident: any = null;
+
+    if (dayLabel === "T-18d" || idx === 4) {
+      incident = {
+        type: "alert" as const,
+        label: "🚨 Threat Alert ALT-9041: Pre-Auth RCE Infiltration",
+        desc: "CVE-2024-55591 signature detected on Bastion Ingress (Akira Syndicate)",
+        badge: "THREAT ALERT",
+        color: "#E11D48",
+      };
+    } else if (dayLabel === "T-15d" || idx === 5) {
+      incident = {
+        type: "failure" as const,
+        label: "⚠️ System Failure: Blast Radius Spike ($27.3M)",
+        desc: "Missing Hardware MFA + Permissive Cross-VPC Peering cascade",
+        badge: "SYSTEM FAILURE",
+        color: "#EA580C",
+      };
+    } else if (dayLabel === "T-9d" || idx === 7) {
+      incident = {
+        type: "log" as const,
+        label: "📋 SIEM Log: Lateral VPC Data Exfiltration",
+        desc: "4.2 GB PostgreSQL dump to unauthorized drop IP 185.220.101.5",
+        badge: "LOG ANOMALY",
+        color: "#0284C7",
+      };
+    } else if (dayLabel === "T-3d" || idx === totalPoints - 1) {
+      incident = {
+        type: "solution" as const,
+        label: "✨ Simulated Defense: Virtual Patch & Standby",
+        desc: "Optimal architecture cuts loss from $2.55M to $15k (-99.4%)",
+        badge: "OPTIMAL FIX",
+        color: "#059669",
+      };
+    }
+
+    return {
+      name: dayLabel,
+      eal: Math.round((h.portfolioEal / 1e6) * 100) / 100,
+      var95: Math.round((h.var95 / 1e6) * 100) / 100,
+      incident,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-[#E3FDFD] text-[#0C262D] flex flex-col selection:bg-[#71C9CE] selection:text-[#042F2E]">
@@ -605,32 +660,68 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setSelectedPointLabel("T-0 (Current Incident: Core Payment Gateway Spike)");
-                      setFailureMapMode("failure");
-                      setShowFailureMapModal(true);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs transition-all shadow-sm flex items-center gap-1.5 border border-[#71C9CE]"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Inspect Failure & Loss Map</span>
-                  </button>
+                  {/* Interactive Map Category Quick Switchers */}
+                  <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-xl border border-[#A6E3E9] shadow-sm">
+                    <button
+                      onClick={() => {
+                        setSelectedPointLabel("T-18d (Security Alert: CVE-2024-55591 Pre-Auth RCE)");
+                        setFailureMapMode("alert");
+                        setShowFailureMapModal(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-mono font-bold flex items-center gap-1 transition-all"
+                      title="View Threat Alert Map"
+                    >
+                      <Zap className="w-3 h-3 text-amber-700" />
+                      <span>Alerts (ALT-9041)</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedPointLabel("T-15d (System Architecture Failure & Blast Radius)");
+                        setFailureMapMode("failure");
+                        setShowFailureMapModal(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200 text-[11px] font-mono font-bold flex items-center gap-1 transition-all"
+                      title="View System Failure & Blast Radius Map"
+                    >
+                      <AlertTriangle className="w-3 h-3 text-rose-700" />
+                      <span>Failure Map (3 Breakdowns)</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedPointLabel("T-9d (Forensic SIEM Log Activity & Audit Trace)");
+                        setFailureMapMode("log");
+                        setShowFailureMapModal(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 text-[11px] font-mono font-bold flex items-center gap-1 transition-all"
+                      title="View Log Activity & Audit Map"
+                    >
+                      <Terminal className="w-3 h-3 text-sky-700" />
+                      <span>Logs (5 Events)</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedPointLabel("T-3d (Simulated Optimal Security Architecture)");
+                        setFailureMapMode("solution");
+                        setShowFailureMapModal(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] text-[11px] font-mono font-black flex items-center gap-1 transition-all shadow-sm"
+                      title="Simulate Optimal Solution"
+                    >
+                      <Sparkles className="w-3 h-3 text-[#042F2E]" />
+                      <span>Simulate Fix (-99.4%)</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div
-                onClick={() => {
-                  setSelectedPointLabel("T-0 (Current Incident: Core Payment Gateway Spike)");
-                  setFailureMapMode("failure");
-                  setShowFailureMapModal(true);
-                }}
-                className="h-64 w-full bg-white p-4 rounded-xl border border-[#A6E3E9] cursor-pointer hover:border-[#71C9CE] transition-all relative group"
-                title="Click anywhere on chart to inspect failure mapping and simulate optimal solution"
-              >
-                <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg bg-[#083344] text-white text-[10px] font-mono font-bold shadow-md flex items-center gap-1 pointer-events-none">
-                  <Eye className="w-3 h-3" />
-                  <span>Click point to open Failure Map</span>
+              {/* Chart Canvas with Interactive Clickable Graph Points */}
+              <div className="h-64 w-full bg-white p-4 rounded-xl border border-[#A6E3E9] transition-all relative">
+                <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-lg bg-[#083344] text-white text-[10px] font-mono font-bold shadow-md flex items-center gap-1.5 pointer-events-none">
+                  <span className="w-2 h-2 rounded-full bg-[#71C9CE] animate-ping" />
+                  <span>Click individual pins (Alert, Failure, Log, Fix) on the curve to inspect</span>
                 </div>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trendChartData}>
@@ -647,52 +738,186 @@ export default function DashboardPage() {
                     <XAxis dataKey="name" stroke="#164E63" fontSize={11} />
                     <YAxis stroke="#164E63" fontSize={11} tickFormatter={(v) => `$${v}M`} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: "#ffffff", borderColor: "#71C9CE", borderRadius: "8px", fontSize: "12px", color: "#0C262D" }}
-                      formatter={(val: any) => [`$${val}M`, ""]}
+                      content={({ active, payload, label }: any) => {
+                        if (active && payload && payload.length) {
+                          const d = payload[0].payload;
+                          const inc = d.incident;
+                          return (
+                            <div className="bg-[#0C262D] text-white p-3 rounded-xl border-2 border-[#71C9CE] shadow-2xl text-xs max-w-xs space-y-1.5 font-mono">
+                              <div className="flex items-center justify-between border-b border-[#71C9CE]/40 pb-1">
+                                <span className="font-extrabold text-[#71C9CE] text-sm">{d.name}</span>
+                                <span className="text-[10px] text-[#A6E3E9] uppercase font-bold">OpenFAIR Quant</span>
+                              </div>
+                              <div className="flex justify-between gap-4 text-[11px]">
+                                <span className="text-gray-300">Expected Annual Loss:</span>
+                                <span className="font-extrabold text-white">${d.eal}M</span>
+                              </div>
+                              <div className="flex justify-between gap-4 text-[11px]">
+                                <span className="text-gray-300">95% Value at Risk:</span>
+                                <span className="font-extrabold text-[#71C9CE]">${d.var95}M</span>
+                              </div>
+                              {inc && (
+                                <div className="pt-2 border-t border-white/20 space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: inc.color }} />
+                                    <span className="text-[11px] font-black" style={{ color: inc.color }}>
+                                      {inc.label}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-gray-300 font-sans leading-tight">{inc.desc}</p>
+                                  <div className="text-[10px] text-[#71C9CE] font-bold underline cursor-pointer pt-1">
+                                    👉 Click to expand {inc.badge} Map & Simulation
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
-                    <Area type="monotone" dataKey="var95" stroke="#71C9CE" fill="url(#varGrad)" strokeWidth={2} name="95% VaR" />
-                    <Area type="monotone" dataKey="eal" stroke="#083344" fill="url(#ealGrad)" strokeWidth={2} name="EAL" />
+                    <Area
+                      type="monotone"
+                      dataKey="var95"
+                      stroke="#71C9CE"
+                      fill="url(#varGrad)"
+                      strokeWidth={2.5}
+                      name="95% VaR"
+                      dot={(props: any) => {
+                        const { cx, cy, payload } = props;
+                        if (!payload?.incident) return <g key={`dot-empty-${payload?.name}`} />;
+                        const inc = payload.incident;
+                        return (
+                          <g
+                            key={`inc-dot-${payload.name}`}
+                            className="cursor-pointer group"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPointLabel(`${payload.name}: ${inc.label}`);
+                              setFailureMapMode(inc.type);
+                              setShowFailureMapModal(true);
+                            }}
+                          >
+                            {/* Generous Clickable Hit Target */}
+                            <circle cx={cx} cy={cy} r={20} fill="transparent" />
+
+                            {/* Pulsing Radar Ring */}
+                            <circle
+                              cx={cx}
+                              cy={cy}
+                              r={12}
+                              fill="none"
+                              stroke={inc.color}
+                              strokeWidth={2}
+                              className="animate-ping opacity-75"
+                            />
+
+                            {/* Solid Marker Node */}
+                            <circle
+                              cx={cx}
+                              cy={cy}
+                              r={8}
+                              fill={inc.color}
+                              stroke="#ffffff"
+                              strokeWidth={2.5}
+                              className="shadow-lg"
+                            />
+
+                            {/* Inner Dot */}
+                            <circle cx={cx} cy={cy} r={3} fill="#ffffff" />
+
+                            {/* Interactive Floating Badge Tag */}
+                            <g transform={`translate(${cx - 30}, ${cy - 26})`}>
+                              <rect
+                                width={60}
+                                height={18}
+                                rx={9}
+                                fill="#0C262D"
+                                stroke={inc.color}
+                                strokeWidth={1.5}
+                                className="shadow-md"
+                              />
+                              <text
+                                x={30}
+                                y={12}
+                                textAnchor="middle"
+                                fill="#ffffff"
+                                fontSize={9}
+                                fontFamily="monospace"
+                                fontWeight="bold"
+                              >
+                                {inc.badge}
+                              </text>
+                            </g>
+                          </g>
+                        );
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="eal"
+                      stroke="#083344"
+                      fill="url(#ealGrad)"
+                      strokeWidth={2.5}
+                      name="EAL"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* Interactive Point Drilldown Selectors */}
+              {/* Interactive Timeline Event Drilldown Buttons */}
               <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#A6E3E9]/60">
                 <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#164E63] font-bold">
                   <Compass className="w-3.5 h-3.5 text-[#083344]" />
-                  <span>Click timeline point to expand failure architecture & attack path:</span>
+                  <span>Click timeline point to expand interactive architecture & attack map:</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => {
-                      setSelectedPointLabel("T-0 (Current Incident: Core Payment Gateway Spike)");
+                      setSelectedPointLabel("T-18d (Security Alert: CVE-2024-55591 Pre-Auth RCE)");
+                      setFailureMapMode("alert");
+                      setShowFailureMapModal(true);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-600 animate-ping" />
+                    <span>📍 T-18d | ⚡ Threat Alert: Pre-Auth RCE</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedPointLabel("T-15d (System Failure: SPoF & Blast Radius Spike to $27.3M)");
                       setFailureMapMode("failure");
                       setShowFailureMapModal(true);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                    className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-900 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
                   >
                     <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
-                    <span>📍 T-0 Spike: Payment Gateway ($2.55M Exposure)</span>
+                    <span>📍 T-15d | 🚨 System Failure ($27.3M Spike)</span>
                   </button>
+
                   <button
                     onClick={() => {
-                      setSelectedPointLabel("T-6d (Vendor SPoF Concentration in AWS US-East-1)");
-                      setFailureMapMode("failure");
+                      setSelectedPointLabel("T-9d (SIEM Forensic Log Activity: Lateral Exfiltration)");
+                      setFailureMapMode("log");
                       setShowFailureMapModal(true);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#CBF1F5] border border-[#A6E3E9] text-[#083344] text-[10px] font-mono font-bold transition-all shadow-sm"
+                    className="px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-300 text-sky-900 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
                   >
-                    <span>📍 T-6d: AWS US-East-1 SPoF</span>
+                    <span className="w-2 h-2 rounded-full bg-sky-600" />
+                    <span>📍 T-9d | 📋 SIEM Log: Lateral Exfil (4.2GB)</span>
                   </button>
+
                   <button
                     onClick={() => {
-                      setSelectedPointLabel("T-12d (Baseline OpenFAIR Calibration)");
-                      setFailureMapMode("failure");
+                      setSelectedPointLabel("T-3d (Simulated Optimal Solution Architecture)");
+                      setFailureMapMode("solution");
                       setShowFailureMapModal(true);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#CBF1F5] border border-[#A6E3E9] text-[#083344] text-[10px] font-mono font-bold transition-all shadow-sm"
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-950 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
                   >
-                    <span>📍 T-12d: Baseline Model Calibration</span>
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>📍 T-3d | ✨ Simulate Optimal Fix (-99.4%)</span>
                   </button>
                 </div>
               </div>
@@ -1467,328 +1692,920 @@ export default function DashboardPage() {
         {/* INTERACTIVE SYSTEM FAILURE & LOSS BLAST RADIUS MAP MODAL     */}
         {/* ============================================================ */}
         {showFailureMapModal && (
-          <div className="fixed inset-0 z-50 bg-[#0C262D]/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-[#E3FDFD] border-2 border-[#71C9CE] rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-50 bg-[#0C262D]/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-[#E3FDFD] border-2 border-[#71C9CE] rounded-3xl max-w-5xl w-full max-h-[94vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               {/* Modal Top Bar */}
               <div className="p-5 bg-[#CBF1F5] border-b border-[#A6E3E9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-[#71C9CE] flex items-center justify-center text-[#042F2E] font-black border border-[#A6E3E9] shadow-sm">
-                      {failureMapMode === "failure" ? <AlertTriangle className="w-4 h-4 text-rose-800" /> : <ShieldCheck className="w-4 h-4 text-[#042F2E]" />}
+                      {failureMapMode === "failure" && <AlertTriangle className="w-4 h-4 text-rose-800" />}
+                      {failureMapMode === "alert" && <Zap className="w-4 h-4 text-amber-700" />}
+                      {failureMapMode === "log" && <Terminal className="w-4 h-4 text-sky-700" />}
+                      {failureMapMode === "solution" && <Sparkles className="w-4 h-4 text-[#042F2E]" />}
                     </div>
-                    <h2 className="text-base font-extrabold text-[#0C262D]">
-                      {failureMapMode === "failure"
-                        ? "System Architecture Failure & Attack Path Blast Radius Map"
-                        : "Simulated Optimal Security Architecture & Solution Map"}
-                    </h2>
+                    <div>
+                      <h2 className="text-base font-extrabold text-[#0C262D]">
+                        {failureMapMode === "failure" && "System Architecture Failure & Attack Blast Radius Map"}
+                        {failureMapMode === "alert" && "Security Threat Alert Triage & Exploitation Vector Map"}
+                        {failureMapMode === "log" && "Forensic SIEM Log Activity & Audit Telemetry Trace"}
+                        {failureMapMode === "solution" && "Simulated Optimal Security Architecture & Solution Map"}
+                      </h2>
+                      <p className="text-xs text-[#164E63] font-medium mt-0.5">
+                        Active Timeline Point: <strong className="text-[#083344] font-mono">{selectedPointLabel}</strong>
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-[#164E63] font-medium mt-1">
-                    Drilldown: <strong className="text-[#083344]">{selectedPointLabel}</strong>
-                  </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* Mode Toggle */}
-                  <div className="flex rounded-xl bg-white p-1 border border-[#A6E3E9] text-xs font-mono shadow-sm">
+                  {/* Mode Navigation Tabs */}
+                  <div className="flex flex-wrap rounded-xl bg-white p-1 border border-[#A6E3E9] text-xs font-mono shadow-sm gap-1">
                     <button
                       onClick={() => setFailureMapMode("failure")}
-                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all ${
+                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all flex items-center gap-1.5 ${
                         failureMapMode === "failure"
                           ? "bg-rose-100 text-rose-900 border border-rose-300 shadow-sm"
                           : "text-[#164E63] hover:text-[#0C262D]"
                       }`}
                     >
-                      🚨 System Failure (Root Cause)
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-700" />
+                      <span>🚨 Failure Map</span>
                     </button>
+
+                    <button
+                      onClick={() => setFailureMapMode("alert")}
+                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all flex items-center gap-1.5 ${
+                        failureMapMode === "alert"
+                          ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-sm"
+                          : "text-[#164E63] hover:text-[#0C262D]"
+                      }`}
+                    >
+                      <Zap className="w-3.5 h-3.5 text-amber-700" />
+                      <span>⚡ Threat Alerts</span>
+                    </button>
+
+                    <button
+                      onClick={() => setFailureMapMode("log")}
+                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all flex items-center gap-1.5 ${
+                        failureMapMode === "log"
+                          ? "bg-sky-100 text-sky-900 border border-sky-300 shadow-sm"
+                          : "text-[#164E63] hover:text-[#0C262D]"
+                      }`}
+                    >
+                      <Terminal className="w-3.5 h-3.5 text-sky-700" />
+                      <span>📋 Log Activity</span>
+                    </button>
+
                     <button
                       onClick={() => setFailureMapMode("solution")}
-                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all flex items-center gap-1 ${
+                      className={`px-3 py-1.5 rounded-lg font-extrabold transition-all flex items-center gap-1.5 ${
                         failureMapMode === "solution"
                           ? "bg-[#71C9CE] text-[#042F2E] border border-[#71C9CE] shadow-sm font-black"
                           : "text-[#164E63] hover:text-[#0C262D]"
                       }`}
                     >
-                      <Sparkles className="w-3 h-3 text-[#042F2E]" />
-                      <span>⚡ Simulate Optimal Solution</span>
+                      <Sparkles className="w-3.5 h-3.5 text-[#042F2E]" />
+                      <span>✨ Simulate Solution</span>
                     </button>
                   </div>
 
                   <button
                     onClick={() => setShowFailureMapModal(false)}
                     className="p-2 rounded-xl bg-white border border-[#A6E3E9] hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 text-[#164E63] transition-all"
+                    title="Close Modal"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Modal Body */}
+              {/* Modal Body with Multi-Mode Content */}
               <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
-                {/* Mode Status Banner */}
-                {failureMapMode === "failure" ? (
-                  <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 space-y-1 shadow-sm">
-                    <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
-                      <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
-                      <span>Active System Failure State: Single Point of Failure (SPoF) Cascading Loss</span>
+                {/* TAB 1: SYSTEM FAILURE & ATTACK BLAST RADIUS MAP */}
+                {failureMapMode === "failure" && (
+                  <div className="space-y-5 animate-in fade-in duration-200">
+                    <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 space-y-1 shadow-sm">
+                      <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
+                        <span>System Architecture Failure State: 3 Breakdown Points Causing $2.55M Cascading Loss</span>
+                      </div>
+                      <p className="text-xs text-rose-800 font-medium">
+                        Akira Ransomware Syndicate leveraged unpatched Pre-Auth RCE (CVE-2024-55591) on Bastion Ingress. Lack of hardware FIDO2 MFA allowed instant privilege escalation, permissive VPC peering enabled lateral egress into RDS PostgreSQL, and an AWS US-East-1 SPoF locked the company into an uncontrolled 36-hour outage.
+                      </p>
                     </div>
-                    <p className="text-xs text-rose-800 font-medium">
-                      Exploitation of active CISA KEV CVE-2024-55591 on the Core Payment Gateway bypassed single-factor authentication, laterally accessed customer records, and forced a 36-hour multi-million dollar outage due to AWS US-East-1 regional lock.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-2xl bg-[#CBF1F5] border-2 border-[#71C9CE] text-[#042F2E] space-y-1 shadow-sm">
-                    <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
-                      <Sparkles className="w-4 h-4 text-[#083344]" />
-                      <span>Simulated Optimal Solution: Defense-in-Depth Architecture Mitigates 99.4% of Loss</span>
+
+                    {/* 4-Tier Breakdown Visual Topology */}
+                    <div className="space-y-4">
+                      {/* Tier 1 */}
+                      <div className="p-4 rounded-2xl border-2 border-rose-300 bg-white ring-2 ring-rose-200/60 shadow-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs bg-rose-100 text-rose-800">
+                              <ShieldAlert className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs font-black uppercase text-rose-900">
+                                  Tier 1 — Threat Source & Attack Vector
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-rose-200 text-rose-900">
+                                  CISA KEV EXPLOITED
+                                </span>
+                              </div>
+                              <p className="text-xs text-[#164E63] font-medium mt-0.5">
+                                Akira Ransomware Syndicate • Pre-Auth Remote Code Execution (FortiOS CVE-2024-55591)
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right font-mono text-[11px] font-bold text-rose-800">
+                            CVSS 9.8 Critical • Ingress Port 443
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center my-0.5">
+                        <div className="w-0.5 h-5 border-l-2 border-dashed border-rose-400" />
+                      </div>
+
+                      {/* Tier 2 */}
+                      <div className="p-5 rounded-2xl bg-white border-2 border-rose-300 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono flex items-center gap-2">
+                            <span>Tier 2 — Critical System Architecture Breakdowns (Root Cause)</span>
+                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-900 font-bold text-[10px]">
+                              3 Fault Points
+                            </span>
+                          </h4>
+                          <span className="text-[10px] font-mono text-rose-700 font-bold">Unmitigated Exposure</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/70 space-y-1.5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-rose-900 text-xs">Breakdown #1: Missing Hardware MFA</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-200 text-rose-900 font-bold">CRITICAL</span>
+                            </div>
+                            <p className="text-[11px] text-[#164E63] font-medium">
+                              Administrative Bastion jumpbox relied on single-factor fallback tokens without FIDO2 WebAuthn enforcement.
+                            </p>
+                            <div className="text-[10px] font-mono font-bold text-rose-800">
+                              Loss Factor: Lateral Credential Pivot (100% Ease)
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/70 space-y-1.5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-rose-900 text-xs">Breakdown #2: Permissive Peering</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-200 text-rose-900 font-bold">HIGH</span>
+                            </div>
+                            <p className="text-[11px] text-[#164E63] font-medium">
+                              Cross-VPC Peering lacked micro-segmentation. Ingress traffic pivoted directly into internal database subnets.
+                            </p>
+                            <div className="text-[10px] font-mono font-bold text-rose-800">
+                              Loss Factor: 145,000 Cardholder Records Exposed
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/70 space-y-1.5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-rose-900 text-xs">Breakdown #3: AWS SPoF Lock</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-200 text-rose-900 font-bold">HIGH</span>
+                            </div>
+                            <p className="text-[11px] text-[#164E63] font-medium">
+                              Entire settlement pipeline deployed in single region AWS us-east-1 with no automated warm standby in secondary region.
+                            </p>
+                            <div className="text-[10px] font-mono font-bold text-rose-800">
+                              Loss Factor: 36h Full Production Downtime
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center my-0.5">
+                        <div className="w-0.5 h-5 border-l-2 border-dashed border-rose-400" />
+                      </div>
+
+                      {/* Tier 3 */}
+                      <div className="p-5 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] space-y-3 shadow-sm">
+                        <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono">
+                          Tier 3 — Compromised Asset Blast Radius
+                        </h4>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="p-3 bg-white rounded-xl border border-rose-300">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#0C262D] text-xs">Core Payment Gateway API</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">Primary Breach</span>
+                            </div>
+                            <span className="text-[10px] text-[#164E63] block mt-1">Tier-1 Revenue Engine • 10.0.1.4</span>
+                          </div>
+
+                          <div className="p-3 bg-white rounded-xl border border-rose-300">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#0C262D] text-xs">RDS PostgreSQL Cluster</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">Data Exfiltration</span>
+                            </div>
+                            <span className="text-[10px] text-[#164E63] block mt-1">145k Customer Records • 10.0.3.18</span>
+                          </div>
+
+                          <div className="p-3 bg-white rounded-xl border border-rose-300">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#0C262D] text-xs">Settlement Ledger Queue</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">Outage Stall</span>
+                            </div>
+                            <span className="text-[10px] text-[#164E63] block mt-1">Kafka/SQS Cluster • us-east-1 SPoF</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center my-0.5">
+                        <div className="w-0.5 h-5 border-l-2 border-dashed border-rose-400" />
+                      </div>
+
+                      {/* Tier 4 */}
+                      <div className="p-5 rounded-2xl bg-white border-2 border-rose-300 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono">
+                            Tier 4 — OpenFAIR Cascading Financial Loss Breakdown ($)
+                          </h4>
+                          <span className="text-[10px] font-mono text-rose-800 font-bold">Single-Event Exposure</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="p-3.5 bg-rose-50/60 rounded-xl border border-rose-200 shadow-sm">
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">1. Forensics & Incident Response</span>
+                            <div className="text-lg font-black font-mono mt-1 text-rose-800">$850,000</div>
+                            <span className="text-[10px] text-[#164E63] font-medium">IR retainers, forensic triage, and audit</span>
+                          </div>
+
+                          <div className="p-3.5 bg-rose-50/60 rounded-xl border border-rose-200 shadow-sm">
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">2. Revenue Downtime (Interruption)</span>
+                            <div className="text-lg font-black font-mono mt-1 text-rose-800">$1,200,000</div>
+                            <span className="text-[10px] text-[#164E63] font-medium">36h total outage across transactions</span>
+                          </div>
+
+                          <div className="p-3.5 bg-rose-50/60 rounded-xl border border-rose-200 shadow-sm">
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">3. Regulatory Fines (SEC & DORA)</span>
+                            <div className="text-lg font-black font-mono mt-1 text-rose-800">$500,000</div>
+                            <span className="text-[10px] text-[#164E63] font-medium">SEC Form 8-K mandatory disclosure penalty</span>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                          <div>
+                            <span className="text-xs font-black uppercase font-mono block">
+                              Total Single-Event Failure Exposure: $2,550,000
+                            </span>
+                            <span className="text-xs font-medium">
+                              Elevates continuous Expected Annual Loss (EAL) by +$75,000/year until remediated.
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => setFailureMapMode("alert")}
+                              className="px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-900 text-xs font-bold hover:bg-rose-50"
+                            >
+                              ⚡ View Alerts
+                            </button>
+                            <button
+                              onClick={() => setFailureMapMode("log")}
+                              className="px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-900 text-xs font-bold hover:bg-rose-50"
+                            >
+                              📋 View Logs
+                            </button>
+                            <button
+                              onClick={() => setFailureMapMode("solution")}
+                              className="px-3 py-1.5 rounded-lg bg-[#71C9CE] text-[#042F2E] text-xs font-black hover:bg-[#A6E3E9] shadow-sm flex items-center gap-1"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>Simulate Solution</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-xs text-[#164E63] font-medium">
-                      Edge WAF virtual patching blocks RCE exploits in 0ms, FIDO2 hardware token WebAuthn eliminates administrative credential theft, and active-active US-West-2 warm standby reduces maximum downtime from 36 hours to under 90 seconds.
-                    </p>
                   </div>
                 )}
 
-                {/* Topology & Blast Radius Interactive Flow Map */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-xs font-mono font-bold text-[#083344] uppercase tracking-wider border-b border-[#A6E3E9] pb-2">
-                    <span>Attack Vector & System Topology Mapping</span>
-                    <span>{failureMapMode === "failure" ? "Status: VULNERABLE & FAILING" : "Status: SHIELDED & OPTIMAL"}</span>
-                  </div>
-
-                  {/* Tier 1: Threat Source */}
-                  <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
-                    failureMapMode === "failure" ? "bg-white border-rose-300 ring-2 ring-rose-200" : "bg-white border-[#71C9CE] ring-2 ring-[#71C9CE]/25"
-                  }`}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
-                          failureMapMode === "failure" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
-                        }`}>
-                          <Crosshair className="w-4 h-4" />
+                {/* TAB 2: SECURITY THREAT ALERTS & VECTOR MAP */}
+                {failureMapMode === "alert" && (
+                  <div className="space-y-5 animate-in fade-in duration-200">
+                    <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 space-y-1 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
+                          <Zap className="w-4 h-4 text-amber-700" />
+                          <span>Active Threat Alert Feed & IOC Vector Correlation</span>
                         </div>
-                        <div>
-                          <span className="text-xs font-bold text-[#0C262D]">Threat Source: Akira Ransomware / FIN7 Adversary</span>
-                          <span className="text-[11px] text-[#164E63] block font-mono">
-                            Exploitation vector: CVE-2024-55591 (Authentication Bypass, CVSS 9.8) • TEF: 14.5 attacks/year
-                          </span>
-                        </div>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-extrabold">
+                          4 CORRELATED ALERTS
+                        </span>
                       </div>
-                      <span className={`text-[10px] font-mono px-2.5 py-1 rounded-lg font-extrabold uppercase ${
-                        failureMapMode === "failure" ? "bg-rose-100 text-rose-800 border border-rose-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                      }`}>
-                        {failureMapMode === "failure" ? "🚨 Active Exploitation" : "🛡️ Blocked at Edge WAF"}
+                      <p className="text-xs text-amber-900 font-medium">
+                        Live detection telemetry aggregated from CrowdStrike Falcon, AWS GuardDuty, and Splunk Enterprise Security matching the Akira/FIN7 intrusion campaign.
+                      </p>
+                    </div>
+
+                    {/* MITRE ATT&CK Progression Banner */}
+                    <div className="p-4 rounded-2xl bg-white border border-[#A6E3E9] space-y-2 shadow-sm">
+                      <span className="text-[10px] font-mono font-extrabold text-[#0C262D] uppercase tracking-wider block">
+                        MITRE ATT&CK® Killchain Progression Flow:
                       </span>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                        <span className="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-900 border border-rose-300 font-bold flex items-center gap-1">
+                          <span>1. T1190: Initial Ingress</span>
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-[#71C9CE]" />
+                        <span className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 font-bold flex items-center gap-1">
+                          <span>2. T1078: Privilege Escalation</span>
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-[#71C9CE]" />
+                        <span className="px-2.5 py-1 rounded-lg bg-sky-100 text-sky-900 border border-sky-300 font-bold flex items-center gap-1">
+                          <span>3. T1021.004: Lateral Peering</span>
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-[#71C9CE]" />
+                        <span className="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-900 border border-purple-300 font-bold flex items-center gap-1">
+                          <span>4. T1048: Data Exfiltration</span>
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-[#71C9CE]" />
+                        <span className="px-2.5 py-1 rounded-lg bg-red-100 text-red-950 border border-red-300 font-bold flex items-center gap-1">
+                          <span>5. T1499: SPoF Outage</span>
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Connection Line */}
-                  <div className="flex justify-center my-1">
-                    <div className={`w-0.5 h-6 border-l-2 border-dashed ${failureMapMode === "failure" ? "border-rose-400" : "border-[#71C9CE]"}`} />
-                  </div>
-
-                  {/* Tier 2: The 3 Critical Failure Points / Mitigations */}
-                  <div>
-                    <div className="text-[11px] font-mono font-bold text-[#164E63] mb-2 uppercase">
-                      {failureMapMode === "failure" ? "Root Cause Failure Nodes (3 Breakdown Points):" : "Optimal Security Mitigations Deployed:"}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {/* Node A */}
-                      <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
-                        failureMapMode === "failure" ? "bg-rose-50/70 border-rose-300" : "bg-[#CBF1F5] border-2 border-[#71C9CE]"
-                      }`}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-extrabold text-xs text-[#0C262D]">
-                            {failureMapMode === "failure" ? "Point 1: Missing Hardware MFA" : "Solution 1: FIDO2 Hardware Token"}
-                          </span>
-                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase ${
-                            failureMapMode === "failure" ? "bg-rose-200 text-rose-900" : "bg-emerald-200 text-emerald-900"
-                          }`}>
-                            {failureMapMode === "failure" ? "CRITICAL GAP" : "RESOLVED"}
+                    {/* Alert Cards List */}
+                    <div className="space-y-3">
+                      <div
+                        onClick={() => setActiveAlertId("ALT-9041")}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer shadow-sm ${
+                          activeAlertId === "ALT-9041"
+                            ? "bg-white border-rose-400 ring-2 ring-rose-200"
+                            : "bg-white/80 border-[#A6E3E9] hover:border-rose-300"
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#A6E3E9]/50 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-mono font-black text-[10px]">
+                              CRITICAL • CVSS 9.8
+                            </span>
+                            <span className="font-mono text-xs font-black text-[#0C262D]">
+                              ALT-9041: Pre-Authentication RCE Exploit Signature Detected
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-[#164E63] font-bold">
+                            Engine: AWS GuardDuty & CrowdStrike Falcon
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#164E63] font-medium leading-relaxed">
-                          {failureMapMode === "failure"
-                            ? "Admin gateway relied on single-factor password; session hijacked through spear-phishing token extraction."
-                            : "Hardware token WebAuthn enforced across administrative endpoints. 100% immune to credential reuse and phishing."}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Target Asset:</span>
+                            <span className="font-bold text-[#0C262D]">bastion-jumpbox-01 (10.0.1.4:443)</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Source Ingress:</span>
+                            <span className="font-mono text-rose-800 font-bold">45.33.32.156 (Tor Exit Node)</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Financial Risk Attribution:</span>
+                            <span className="font-bold text-rose-800">+$27.3M EAL Exposure Surge</span>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-[#164E63] mt-2 font-medium bg-[#CBF1F5]/40 p-2 rounded-lg border border-[#A6E3E9]">
+                          Inbound TCP request matched exploit pattern for Fortinet/FortiOS Pre-Auth RCE (CVE-2024-55591). Attacker acquired root shell and minted unauthorized local administrator tokens.
                         </p>
                       </div>
 
-                      {/* Node B */}
-                      <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
-                        failureMapMode === "failure" ? "bg-rose-50/70 border-rose-300" : "bg-[#CBF1F5] border-2 border-[#71C9CE]"
-                      }`}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-extrabold text-xs text-[#0C262D]">
-                            {failureMapMode === "failure" ? "Point 2: VPC Direct Peering" : "Solution 2: Microsegmentation"}
-                          </span>
-                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase ${
-                            failureMapMode === "failure" ? "bg-rose-200 text-rose-900" : "bg-emerald-200 text-emerald-900"
-                          }`}>
-                            {failureMapMode === "failure" ? "LATERAL PATH" : "CONTAINED"}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-[#164E63] font-medium leading-relaxed">
-                          {failureMapMode === "failure"
-                            ? "Unsegmented flat network route allowed lateral traversal straight from payment gateway into Customer PII Database."
-                            : "Zero-Trust microsegmentation & Just-In-Time ephemeral IAM prevents unauthorized lateral traversal into PII databases."}
-                        </p>
-                      </div>
-
-                      {/* Node C */}
-                      <div className={`p-4 rounded-2xl border transition-all shadow-sm ${
-                        failureMapMode === "failure" ? "bg-rose-50/70 border-rose-300" : "bg-[#CBF1F5] border-2 border-[#71C9CE]"
-                      }`}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-extrabold text-xs text-[#0C262D]">
-                            {failureMapMode === "failure" ? "Point 3: AWS US-East-1 SPoF" : "Solution 3: Multi-Region Standby"}
-                          </span>
-                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase ${
-                            failureMapMode === "failure" ? "bg-rose-200 text-rose-900" : "bg-emerald-200 text-emerald-900"
-                          }`}>
-                            {failureMapMode === "failure" ? "CONCENTRATION SPoF" : "RESILIENT"}
+                      <div
+                        onClick={() => setActiveAlertId("ALT-9042")}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer shadow-sm ${
+                          activeAlertId === "ALT-9042"
+                            ? "bg-white border-amber-400 ring-2 ring-amber-200"
+                            : "bg-white/80 border-[#A6E3E9] hover:border-amber-300"
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#A6E3E9]/50 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-mono font-black text-[10px]">
+                              HIGH • CVSS 8.4
+                            </span>
+                            <span className="font-mono text-xs font-black text-[#0C262D]">
+                              ALT-9042: IAM STS Role Assumed Without FIDO2 Hardware MFA
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-[#164E63] font-bold">
+                            Engine: Splunk ES Rule SEC_IAM_MFA_01
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#164E63] font-medium leading-relaxed">
-                          {failureMapMode === "failure"
-                            ? "100% infrastructure dependency on single AWS region with no automated failover; caused 36-hour catastrophic outage."
-                            : "Active-Active warm standby in AWS US-West-2 with automated Route53 DNS health checks reduces failover window to 90 seconds."}
-                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Principal:</span>
+                            <span className="font-bold text-[#0C262D]">arn:aws:iam::role/payment-settlement-role</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Auth Mechanism:</span>
+                            <span className="font-mono text-amber-800 font-bold">Single-Factor Fallback Token</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Policy Violation:</span>
+                            <span className="font-bold text-amber-900">Zero-Trust & PCI-DSS 4.0 Fail</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        onClick={() => setActiveAlertId("ALT-9043")}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer shadow-sm ${
+                          activeAlertId === "ALT-9043"
+                            ? "bg-white border-rose-400 ring-2 ring-rose-200"
+                            : "bg-white/80 border-[#A6E3E9] hover:border-rose-300"
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#A6E3E9]/50 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-mono font-black text-[10px]">
+                              CRITICAL • EXFILTRATION
+                            </span>
+                            <span className="font-mono text-xs font-black text-[#0C262D]">
+                              ALT-9043: Cross-VPC Peering Lateral Data Streaming Anomaly (4.2 GB)
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-[#164E63] font-bold">
+                            Engine: AWS VPC Flow Log Anomaly Detector
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Compromised DB:</span>
+                            <span className="font-bold text-[#0C262D]">rds-payment-prod-primary (10.0.3.18)</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">External Drop IP:</span>
+                            <span className="font-mono text-rose-800 font-bold">185.220.101.5 (Known C2)</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Records Exposed:</span>
+                            <span className="font-bold text-rose-800">145,000 Cardholder Records</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        onClick={() => setActiveAlertId("ALT-9044")}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer shadow-sm ${
+                          activeAlertId === "ALT-9044"
+                            ? "bg-white border-amber-400 ring-2 ring-amber-200"
+                            : "bg-white/80 border-[#A6E3E9] hover:border-amber-300"
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#A6E3E9]/50 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-mono font-black text-[10px]">
+                              MEDIUM • RESILIENCY
+                            </span>
+                            <span className="font-mono text-xs font-black text-[#0C262D]">
+                              ALT-9044: Single Point of Failure (SPoF) in AWS Region us-east-1
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-[#164E63] font-bold">
+                            Engine: Aegis Resiliency Engine
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Primary Region:</span>
+                            <span className="font-bold text-[#0C262D]">AWS us-east-1 (N. Virginia)</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Standby Region:</span>
+                            <span className="font-mono text-rose-800 font-bold">NONE (0% Warm Redundancy)</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">Downtime Penalty:</span>
+                            <span className="font-bold text-rose-800">$1,200,000 Outage Exposure</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-[#CBF1F5] border border-[#A6E3E9] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                      <div className="text-xs text-[#0C262D] font-medium">
+                        Alert triage correlated to <strong>Active Incident INC-2024-8819</strong>. Review forensic raw logs or simulate optimal defense controls.
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => setFailureMapMode("log")}
+                          className="px-3.5 py-2 rounded-xl bg-white border border-[#A6E3E9] text-[#164E63] text-xs font-bold hover:bg-[#E3FDFD] flex items-center gap-1.5"
+                        >
+                          <Terminal className="w-3.5 h-3.5" />
+                          <span>Inspect Telemetry Logs</span>
+                        </button>
+                        <button
+                          onClick={() => setFailureMapMode("solution")}
+                          className="px-4 py-2 rounded-xl bg-[#71C9CE] text-[#042F2E] text-xs font-black hover:bg-[#A6E3E9] shadow-sm flex items-center gap-1.5"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Simulate Defense & Patch</span>
+                        </button>
                       </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Connection Line */}
-                  <div className="flex justify-center my-1">
-                    <div className={`w-0.5 h-6 border-l-2 border-dashed ${failureMapMode === "failure" ? "border-rose-400" : "border-[#71C9CE]"}`} />
+                {/* TAB 3: FORENSIC LOG ACTIVITY & AUDIT TRACE MAP */}
+                {failureMapMode === "log" && (
+                  <div className="space-y-5 animate-in fade-in duration-200">
+                    <div className="p-4 rounded-2xl bg-sky-50 border-2 border-sky-300 text-sky-950 space-y-1 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
+                          <Terminal className="w-4 h-4 text-sky-700" />
+                          <span>Forensic Telemetry Stream & Chronological Audit Trail</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-sky-800">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>SHA256 Cryptographic Immutability Seal Verified</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-sky-900 font-medium">
+                        Continuous telemetry logs ingested across VPC Flow Logs, host-level Auditd, AWS CloudTrail, and PostgreSQL query logs during the incident timeline.
+                      </p>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-mono font-bold text-[#164E63] mr-1">Filter Telemetry:</span>
+                      {[
+                        { id: "all", label: "All Telemetry (5 Events)" },
+                        { id: "vpc", label: "VPC Flow Logs" },
+                        { id: "auth", label: "Auth & SSH" },
+                        { id: "iam", label: "CloudTrail IAM" },
+                        { id: "db", label: "PostgreSQL Audit" },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setLogFilter(tab.id as any)}
+                          className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                            logFilter === tab.id
+                              ? "bg-[#71C9CE] text-[#042F2E] border border-[#71C9CE] shadow-sm font-black"
+                              : "bg-white text-[#164E63] border border-[#A6E3E9] hover:bg-[#CBF1F5]"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Forensic Terminal Event Stream */}
+                    <div className="space-y-3 font-mono">
+                      {(logFilter === "all" || logFilter === "vpc") && (
+                        <div className="p-4 rounded-xl bg-[#082026] text-[#E3FDFD] border border-[#71C9CE]/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] border-b border-white/15 pb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-300 font-black text-[10px]">
+                                VPC_FLOW_LOG
+                              </span>
+                              <span className="text-[#A6E3E9] font-bold">14:21:03.112 UTC</span>
+                            </div>
+                            <span className="text-rose-400 font-bold">INGRESS BREACH ACCEPTED</span>
+                          </div>
+                          <div className="bg-black/40 p-2.5 rounded-lg text-[11px] text-[#A6E3E9] leading-relaxed break-all">
+                            <code>
+                              version 2 123456789012 eni-0a1b2c3d4e5f 45.33.32.156 10.0.1.4 44123 443 6 42 2688 1718804463 1718804523 ACCEPT OK
+                            </code>
+                          </div>
+                          <div className="text-[11px] text-gray-300 font-sans flex items-center justify-between">
+                            <span>
+                              <strong>Forensic Analysis:</strong> Unfiltered ingress on port 443 directly reached the bastion interface without WAF inspection.
+                            </span>
+                            <span className="text-rose-400 font-mono text-[10px] font-bold shrink-0 ml-2">Exploit: CVE-2024-55591</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {(logFilter === "all" || logFilter === "auth") && (
+                        <div className="p-4 rounded-xl bg-[#082026] text-[#E3FDFD] border border-[#71C9CE]/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] border-b border-white/15 pb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300 font-black text-[10px]">
+                                AUDITD / AUTH.LOG
+                              </span>
+                              <span className="text-[#A6E3E9] font-bold">14:22:15.890 UTC</span>
+                            </div>
+                            <span className="text-amber-400 font-bold">MFA BYPASS DETECTED</span>
+                          </div>
+                          <div className="bg-black/40 p-2.5 rounded-lg text-[11px] text-[#A6E3E9] leading-relaxed break-all">
+                            <code>
+                              bastion-jumpbox sshd[14892]: Accepted publickey for ec2-user from 10.0.1.4 port 51234 ssh2: RSA SHA256:8f4c... [MFA Bypass Active via legacy flag]
+                            </code>
+                          </div>
+                          <div className="text-[11px] text-gray-300 font-sans">
+                            <strong>Forensic Analysis:</strong> Session authentication succeeded using a stolen SSH certificate. Absence of hardware FIDO2 WebAuthn token requirement permitted unauthorized interactive shell.
+                          </div>
+                        </div>
+                      )}
+
+                      {(logFilter === "all" || logFilter === "iam") && (
+                        <div className="p-4 rounded-xl bg-[#082026] text-[#E3FDFD] border border-[#71C9CE]/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] border-b border-white/15 pb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-300 font-black text-[10px]">
+                                AWS_CLOUDTRAIL
+                              </span>
+                              <span className="text-[#A6E3E9] font-bold">14:24:08.402 UTC</span>
+                            </div>
+                            <span className="text-purple-400 font-bold">PRIVILEGE ESCALATION</span>
+                          </div>
+                          <div className="bg-black/40 p-2.5 rounded-lg text-[11px] text-[#A6E3E9] leading-relaxed break-all">
+                            <code>
+                              &#123;&quot;eventSource&quot;:&quot;sts.amazonaws.com&quot;,&quot;eventName&quot;:&quot;AssumeRole&quot;,&quot;roleArn&quot;:&quot;arn:aws:iam::123456789012:role/payment-settlement-role&quot;,&quot;sourceIPAddress&quot;:&quot;10.0.1.4&quot;&#125;
+                            </code>
+                          </div>
+                          <div className="text-[11px] text-gray-300 font-sans">
+                            <strong>Forensic Analysis:</strong> Attacker escalated from bastion host to high-privilege settlement service role, gaining direct read access to production database credentials.
+                          </div>
+                        </div>
+                      )}
+
+                      {(logFilter === "all" || logFilter === "db") && (
+                        <div className="p-4 rounded-xl bg-[#082026] text-[#E3FDFD] border border-[#71C9CE]/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] border-b border-white/15 pb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-300 font-black text-[10px]">
+                                POSTGRESQL_AUDIT
+                              </span>
+                              <span className="text-[#A6E3E9] font-bold">14:25:40.719 UTC</span>
+                            </div>
+                            <span className="text-rose-400 font-bold">MASS DATA DUMP</span>
+                          </div>
+                          <div className="bg-black/40 p-2.5 rounded-lg text-[11px] text-[#A6E3E9] leading-relaxed break-all">
+                            <code>
+                              LOG: AUDIT: SESSION,3,1,READ,COPY,TABLE,customers_pii,SELECT * FROM payment_ledger_transactions; [Rows affected: 145,000]
+                            </code>
+                          </div>
+                          <div className="text-[11px] text-gray-300 font-sans">
+                            <strong>Forensic Analysis:</strong> Bulk exfiltration query executed across cross-VPC peering tunnel. 145,000 cardholder records dumped to unencrypted staging directory.
+                          </div>
+                        </div>
+                      )}
+
+                      {(logFilter === "all" || logFilter === "vpc") && (
+                        <div className="p-4 rounded-xl bg-[#082026] text-[#E3FDFD] border border-[#71C9CE]/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] border-b border-white/15 pb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-300 font-black text-[10px]">
+                                NETWORK_EGRESS
+                              </span>
+                              <span className="text-[#A6E3E9] font-bold">14:28:11.004 UTC</span>
+                            </div>
+                            <span className="text-rose-400 font-bold">4.29 GB EXFILTRATION</span>
+                          </div>
+                          <div className="bg-black/40 p-2.5 rounded-lg text-[11px] text-[#A6E3E9] leading-relaxed break-all">
+                            <code>
+                              flow_monitor: CRITICAL_EXFILTRATION: 4,294,967,296 bytes dispatched to 185.220.101.5:443 via encrypted tunnel in 162 seconds.
+                            </code>
+                          </div>
+                          <div className="text-[11px] text-gray-300 font-sans">
+                            <strong>Forensic Analysis:</strong> Data package successfully exfiltrated to adversary infrastructure before automated security group isolation could engage.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white border border-[#A6E3E9] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                      <div className="space-y-0.5 text-xs text-[#164E63]">
+                        <span className="font-bold text-[#0C262D] block">Incident Timeline Forensic Totals:</span>
+                        <span>Attack Velocity: <strong>7m 08s</strong> from Ingress to Exfil • Records Exposed: <strong>145,000</strong> • Forensics Retainer: <strong>$850,000</strong></span>
+                      </div>
+                      <button
+                        onClick={() => setFailureMapMode("solution")}
+                        className="px-4 py-2 rounded-xl bg-[#71C9CE] text-[#042F2E] text-xs font-black hover:bg-[#A6E3E9] shadow-sm flex items-center gap-1.5 shrink-0"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Simulate Prevention Architecture</span>
+                      </button>
+                    </div>
                   </div>
+                )}
 
-                  {/* Tier 3: Impacted Assets */}
-                  <div>
-                    <div className="text-[11px] font-mono font-bold text-[#164E63] mb-2 uppercase">
-                      Impacted Core Enterprise Assets:
+                {/* TAB 4: SIMULATED OPTIMAL SOLUTION & ROSI MAP */}
+                {failureMapMode === "solution" && (
+                  <div className="space-y-5 animate-in fade-in duration-200">
+                    <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-400 text-emerald-950 space-y-1 shadow-sm">
+                      <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
+                        <Sparkles className="w-4 h-4 text-emerald-700" />
+                        <span>Optimal Security Architecture: Defense-in-Depth Eliminates 99.4% of Financial Loss</span>
+                      </div>
+                      <p className="text-xs text-emerald-900 font-medium">
+                        Automated WAF edge virtual patching blocks RCE exploits in 0ms, FIDO2 WebAuthn zero-trust eliminates credential replay attacks, and multi-region active-active standby in US-West-2 reduces downtime from 36 hours to under 90 seconds.
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-3.5 rounded-xl bg-white border border-[#A6E3E9] shadow-sm flex items-center justify-between">
-                        <div>
-                          <span className="font-bold text-xs text-[#0C262D]">Core Payment Gateway (API)</span>
-                          <span className="text-[11px] text-[#164E63] block">Criticality: 95% • Transaction Volume: $42M/day</span>
+                    {/* Shielded Visual Topology */}
+                    <div className="space-y-4">
+                      {/* Tier 1 */}
+                      <div className="p-4 rounded-2xl border-2 border-emerald-300 bg-white ring-2 ring-emerald-200/50 shadow-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs bg-emerald-100 text-emerald-800">
+                              <ShieldCheck className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs font-black uppercase text-emerald-900">
+                                  Tier 1 — Threat Neutralized at Perimeter
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-emerald-200 text-emerald-900">
+                                  EXPLOIT DROPPED IN 0ms
+                                </span>
+                              </div>
+                              <p className="text-xs text-[#164E63] font-medium mt-0.5">
+                                Akira Exploit Payload intercepted by Cloudflare & AWS WAF Virtual Patching rule set
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right font-mono text-[11px] font-bold text-emerald-800">
+                            Pre-Execution Drop • Zero Ingress Penetration
+                          </div>
                         </div>
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
-                          failureMapMode === "failure" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
-                        }`}>
-                          {failureMapMode === "failure" ? "COMPROMISED" : "PROTECTED"}
-                        </span>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-white border border-[#A6E3E9] shadow-sm flex items-center justify-between">
-                        <div>
-                          <span className="font-bold text-xs text-[#0C262D]">Customer Relational DB (PII)</span>
-                          <span className="text-[11px] text-[#164E63] block">Criticality: 100% • 145,000 Sensitive Records</span>
+                      <div className="flex justify-center my-0.5">
+                        <div className="w-0.5 h-5 border-l-2 border-dashed border-[#71C9CE]" />
+                      </div>
+
+                      {/* Tier 2 */}
+                      <div className="p-5 rounded-2xl bg-white border-2 border-emerald-300 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono flex items-center gap-2">
+                            <span>Tier 2 — Fortified Defense Architecture Controls</span>
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-bold text-[10px]">
+                              3 Optimal Controls
+                            </span>
+                          </h4>
+                          <span className="text-[10px] font-mono text-emerald-800 font-bold">ROSI Validated (+520%)</span>
                         </div>
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
-                          failureMapMode === "failure" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
-                        }`}>
-                          {failureMapMode === "failure" ? "BREACH EXPOSURE" : "ZERO EXPOSURE"}
-                        </span>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-1.5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-emerald-950 text-xs">Control #1: WAF Virtual Patching</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold">ACTIVE</span>
+                            </div>
+                            <p className="text-[11px] text-[#164E63] font-medium">
+                              Instant rule deployment on Cloudflare edge drops CVE-2024-55591 buffer overruns before reaching bastion listeners.
+                            </p>
+                            <div className="text-[10px] font-mono font-bold text-emerald-800">
+                              Protection: 100% Perimeter Block
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-1.5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-emerald-950 text-xs">Control #2: FIDO2 Hardware MFA</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold">ACTIVE</span>
+                            </div>
+                            <p className="text-[11px] text-[#164E63] font-medium">
+                              YubiKey / WebAuthn physical hardware token required on all bastion and AWS IAM STS administrative role sessions.
+                            </p>
+                            <div className="text-[10px] font-mono font-bold text-emerald-800">
+                              Protection: Zero Credential Replay
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-1.5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-emerald-950 text-xs">Control #3: Multi-Region Standby</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold">ACTIVE</span>
+                            </div>
+                            <p className="text-[11px] text-[#164E63] font-medium">
+                              Active-active warm standby in AWS us-west-2 with Route 53 health check failover in under 90 seconds.
+                            </p>
+                            <div className="text-[10px] font-mono font-bold text-emerald-800">
+                              Protection: 98.8% Downtime Loss Saved
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center my-0.5">
+                        <div className="w-0.5 h-5 border-l-2 border-dashed border-[#71C9CE]" />
+                      </div>
+
+                      {/* Tier 3 */}
+                      <div className="p-5 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] space-y-3 shadow-sm">
+                        <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono">
+                          Tier 3 — Fortified Assets with Zero-Trust Micro-Segmentation
+                        </h4>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="p-3 bg-white rounded-xl border border-emerald-300">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#0C262D] text-xs">Core Payment Gateway API</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Shielded</span>
+                            </div>
+                            <span className="text-[10px] text-[#164E63] block mt-1">WAF Protected • Zero Exploit Ingress</span>
+                          </div>
+
+                          <div className="p-3 bg-white rounded-xl border border-emerald-300">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#0C262D] text-xs">RDS PostgreSQL Cluster</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Isolated</span>
+                            </div>
+                            <span className="text-[10px] text-[#164E63] block mt-1">AWS PrivateLink Only • 0 Records Stolen</span>
+                          </div>
+
+                          <div className="p-3 bg-white rounded-xl border border-emerald-300">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#0C262D] text-xs">Settlement Ledger Queue</span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Resilient</span>
+                            </div>
+                            <span className="text-[10px] text-[#164E63] block mt-1">Multi-Region Standby • &lt; 90s Failover</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center my-0.5">
+                        <div className="w-0.5 h-5 border-l-2 border-dashed border-[#71C9CE]" />
+                      </div>
+
+                      {/* Tier 4 */}
+                      <div className="p-5 rounded-2xl bg-white border-2 border-emerald-400 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono">
+                            Tier 4 — Optimal Financial Savings & Return on Investment (ROSI)
+                          </h4>
+                          <span className="text-[10px] font-mono text-emerald-800 font-bold">OpenFAIR Quantified</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 shadow-sm">
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">1. Forensics & Incident Response</span>
+                            <div className="text-lg font-black font-mono mt-1 text-emerald-800">$0 (100% Saved)</div>
+                            <span className="text-[10px] text-[#164E63] font-medium">$850k retainer completely avoided</span>
+                          </div>
+
+                          <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 shadow-sm">
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">2. Revenue Downtime (Interruption)</span>
+                            <div className="text-lg font-black font-mono mt-1 text-emerald-800">$15,000 (98.8% Saved)</div>
+                            <span className="text-[10px] text-[#164E63] font-medium">Outage slashed from 36h to 90 seconds</span>
+                          </div>
+
+                          <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 shadow-sm">
+                            <span className="text-[10px] font-mono text-[#164E63] font-bold block">3. Regulatory Fines (SEC & DORA)</span>
+                            <div className="text-lg font-black font-mono mt-1 text-emerald-800">$0 (100% Saved)</div>
+                            <span className="text-[10px] text-[#164E63] font-medium">Zero PII breach = No SEC 8-K penalty</span>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                          <div>
+                            <span className="text-xs font-black uppercase font-mono block">
+                              Net Single-Event Loss: $15,000 (Down from $2,550,000 — 99.4% Reduction)
+                            </span>
+                            <span className="text-xs font-medium">
+                              Slashes continuous Expected Annual Loss (EAL) by -$75,000/year. Return on Investment: +520% • Payback: 1.8 Months.
+                            </span>
+                          </div>
+                          <div className="text-right shrink-0 font-mono">
+                            <div className="text-2xl font-black text-emerald-900">$15,000</div>
+                            <span className="text-[11px] font-bold text-emerald-800">Optimal Defended State</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Connection Line */}
-                  <div className="flex justify-center my-1">
-                    <div className={`w-0.5 h-6 border-l-2 border-dashed ${failureMapMode === "failure" ? "border-rose-400" : "border-[#71C9CE]"}`} />
-                  </div>
-
-                  {/* Tier 4: Cascading Financial Loss Impact Breakdown */}
-                  <div className="p-5 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] space-y-3 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-extrabold text-xs text-[#0C262D] uppercase font-mono">
-                        {failureMapMode === "failure"
-                          ? "Cascading Financial Loss Attribution ($)"
-                          : "Optimal Financial Savings & ROSI Metrics ($)"}
-                      </h4>
-                      <span className="text-[10px] font-mono text-[#164E63] font-bold">OpenFAIR Quantified</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="p-3.5 bg-white rounded-xl border border-[#A6E3E9] shadow-sm">
-                        <span className="text-[10px] font-mono text-[#164E63] font-bold block">1. Forensics & Incident Response</span>
-                        <div className={`text-lg font-black font-mono mt-1 ${failureMapMode === "failure" ? "text-rose-700" : "text-emerald-800"}`}>
-                          {failureMapMode === "failure" ? "$850,000" : "$0 (100% Saved)"}
-                        </div>
-                        <span className="text-[10px] text-[#164E63] font-medium">IR retainers, forensic triage, and audit</span>
-                      </div>
-
-                      <div className="p-3.5 bg-white rounded-xl border border-[#A6E3E9] shadow-sm">
-                        <span className="text-[10px] font-mono text-[#164E63] font-bold block">2. Revenue Downtime (Interruption)</span>
-                        <div className={`text-lg font-black font-mono mt-1 ${failureMapMode === "failure" ? "text-rose-700" : "text-emerald-800"}`}>
-                          {failureMapMode === "failure" ? "$1,200,000" : "$15,000 (98.8% Saved)"}
-                        </div>
-                        <span className="text-[10px] text-[#164E63] font-medium">
-                          {failureMapMode === "failure" ? "36h total outage" : "90 seconds automated failover"}
-                        </span>
-                      </div>
-
-                      <div className="p-3.5 bg-white rounded-xl border border-[#A6E3E9] shadow-sm">
-                        <span className="text-[10px] font-mono text-[#164E63] font-bold block">3. Regulatory Fines (SEC & DORA)</span>
-                        <div className={`text-lg font-black font-mono mt-1 ${failureMapMode === "failure" ? "text-rose-700" : "text-emerald-800"}`}>
-                          {failureMapMode === "failure" ? "$500,000" : "$0 (Threshold Avoided)"}
-                        </div>
-                        <span className="text-[10px] text-[#164E63] font-medium">SEC Form 8-K disclosure penalty avoidance</span>
-                      </div>
-                    </div>
-
-                    {/* Summary Outcome Card */}
-                    <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm ${
-                      failureMapMode === "failure"
-                        ? "bg-rose-100 border-rose-300 text-rose-900"
-                        : "bg-emerald-100 border-emerald-300 text-emerald-950"
-                    }`}>
-                      <div>
-                        <span className="text-xs font-black uppercase font-mono block">
-                          {failureMapMode === "failure" ? "Total Single Event Failure Exposure" : "Net Optimized Outcome (Mitigated State)"}
-                        </span>
-                        <span className="text-xs font-medium">
-                          {failureMapMode === "failure"
-                            ? "Adds +$75,000 in continuous annual Expected Annual Loss (EAL)."
-                            : "Total Loss drops from $2,550,000 to $15,000. Slashes continuous EAL by -$75,000/year."}
-                        </span>
-                      </div>
-
-                      <div className="text-right shrink-0 font-mono">
-                        <div className="text-2xl font-black">
-                          {failureMapMode === "failure" ? "$2,550,000" : "$15,000"}
-                        </div>
-                        <span className="text-[11px] font-bold">
-                          {failureMapMode === "failure" ? "Uncontrolled Worst Case" : "ROSI: +520% • Payback: 1.8 Mo"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Modal Footer Actions */}
               <div className="p-5 bg-[#CBF1F5] border-t border-[#A6E3E9] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="text-xs text-[#164E63] font-mono">
-                  {failureMapMode === "failure" ? (
-                    <span>Click <strong>'Simulate Optimal Solution'</strong> to preview defense architecture.</span>
-                  ) : (
-                    <span>Optimal solution validated: <strong>WAF Virtual Patch + FIDO2 MFA + Multi-Region</strong></span>
+                  {failureMapMode === "failure" && (
+                    <span>Click <strong>'Simulate Optimal Solution'</strong> to preview the defended architecture and ROSI metrics.</span>
+                  )}
+                  {failureMapMode === "alert" && (
+                    <span>Correlated Alert: <strong>ALT-9041 (Pre-Auth RCE)</strong> • Threat Actor: Akira / FIN7</span>
+                  )}
+                  {failureMapMode === "log" && (
+                    <span>Telemetry Ingestion: <strong>5 events logged</strong> • Ingestion latency: 120ms</span>
+                  )}
+                  {failureMapMode === "solution" && (
+                    <span>Optimal solution validated: <strong>WAF Virtual Patch + FIDO2 MFA + Multi-Region Standby</strong></span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {failureMapMode === "failure" ? (
-                    <button
-                      onClick={() => setFailureMapMode("solution")}
-                      className="px-5 py-2.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-black text-xs transition-all shadow-md shadow-[#71C9CE]/30 border border-[#71C9CE] flex items-center gap-1.5"
-                    >
-                      <Sparkles className="w-4 h-4 text-[#042F2E]" />
-                      <span>Simulate Optimal Solution</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                  {failureMapMode !== "solution" ? (
+                    <>
+                      <button
+                        onClick={() => setFailureMapMode("solution")}
+                        className="px-5 py-2.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-black text-xs transition-all shadow-md shadow-[#71C9CE]/30 border border-[#71C9CE] flex items-center gap-1.5"
+                      >
+                        <Sparkles className="w-4 h-4 text-[#042F2E]" />
+                        <span>Simulate Optimal Solution</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
@@ -1827,4 +2644,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
