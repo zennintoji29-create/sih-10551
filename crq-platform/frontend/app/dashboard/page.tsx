@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
   // Connector form state
   const [activeConnectorCat, setActiveConnectorCat] = useState<string>("vulnerability");
-  const [connectorSubTab, setConnectorSubTab] = useState<"live" | "upload" | "sample">("live");
+  const [connectorSubTab, setConnectorSubTab] = useState<"live" | "upload" | "sample" | "github">("github");
   const [csvContent, setCsvContent] = useState("");
   const [siemCritical, setSiemCritical] = useState(12);
   const [siemHigh, setSiemHigh] = useState(45);
@@ -625,7 +625,7 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {/* TAB 1: EXECUTIVE COCKPIT (CISO)                              */}
         {/* ============================================================ */}
-        {activeTab === "cockpit" && (currentRole === "ciso" || currentRole === "admin") && (
+        {activeTab === "cockpit" && currentRole === "ciso" && (
           <div className="space-y-6">
             {/* Headline KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1105,7 +1105,7 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {/* TAB 2: ANALYST QUEUE (SECURITY ANALYST)                      */}
         {/* ============================================================ */}
-        {activeTab === "analyst" && (currentRole === "analyst" || currentRole === "admin") && (
+        {activeTab === "analyst" && currentRole === "analyst" && (
           <div className="space-y-6">
             {/* Analyst Tactical KPI Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -1375,8 +1375,8 @@ export default function DashboardPage() {
                   Configure Category: {activeConnectorCat.toUpperCase()}
                 </h3>
 
-                <div className="flex gap-2">
-                  {(["live", "upload", "sample"] as const).map((tab) => (
+                <div className="flex gap-2 flex-wrap">
+                  {(["github", "live", "upload", "sample"] as const).map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setConnectorSubTab(tab)}
@@ -1384,7 +1384,13 @@ export default function DashboardPage() {
                         connectorSubTab === tab ? "bg-[#71C9CE] text-[#042F2E] border border-[#71C9CE]" : "bg-white text-[#164E63] border border-[#A6E3E9] hover:bg-[#E3FDFD]"
                       }`}
                     >
-                      {tab === "live" ? "Live API Feed" : tab === "upload" ? "Upload File (CSV/JSON)" : "Sample Data"}
+                      {tab === "github"
+                        ? "GitHub Data Sheet & Test"
+                        : tab === "live"
+                        ? "Live API Feed"
+                        : tab === "upload"
+                        ? "Upload File (CSV/JSON)"
+                        : "Sample Data"}
                     </button>
                   ))}
                 </div>
@@ -1527,6 +1533,151 @@ export default function DashboardPage() {
                   </button>
                 </div>
               )}
+
+              {/* SubTab 4: GitHub Security Telemetry Data Sheet & Ingestion */}
+              {connectorSubTab === "github" && (
+                <div className="space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-[#71C9CE]">
+                    <div>
+                      <h4 className="text-xs font-black text-[#0C262D] uppercase font-mono flex items-center gap-1.5">
+                        <Terminal className="w-4 h-4 text-[#083344]" />
+                        <span>GitHub Security & Telemetry Data Sheets</span>
+                      </h4>
+                      <p className="text-[11px] text-[#164E63] mt-0.5">
+                        Integrate software supply chain telemetry directly from GitHub to quantify code vulnerability risk before production deployment.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        try {
+                          const ghCsv = `CVE,Asset,Description,CVSS,Status,AssetTier,LossEstimate
+CVE-2024-43788,github.com/acme/frontend,DOMPurify HTML Sanitization Bypass (XSS),8.2,Open,Tier-2,$420000
+CVE-2024-45296,github.com/acme/payment-gw,Axios SSRF in HTTP redirect parsing,9.1,Open,Tier-1,$1450000
+CVE-2024-55591,github.com/acme/bastion-ingress,FortiOS Pre-Auth Buffer Overflow RCE,9.8,Open,Tier-1,$2550000
+GH-SEC-AWS-KEY,github.com/acme/cloud-infra,Exposed AWS IAM Administrator Secret Key,9.5,Open,Tier-1,$8200000`;
+                          await api.uploadCsvFindings(ghCsv);
+                          setUploadSuccessMsg("GitHub Data Sheet successfully ingested! 4 findings added and OpenFAIR loss recalculated.");
+                          await loadAllData();
+                          setTimeout(() => setUploadSuccessMsg(null), 6000);
+                        } catch (err: any) {
+                          alert(err.message || "Failed to ingest GitHub data sheet");
+                        }
+                      }}
+                      disabled={currentRole === "auditor"}
+                      className="px-4 py-2 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-black text-xs shadow-sm flex items-center gap-1.5 shrink-0 border border-[#71C9CE]"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Run Test Ingestion with GitHub Data Sheet</span>
+                    </button>
+                  </div>
+
+                  {/* GitHub Data Sheet Schema Table */}
+                  <div className="bg-white rounded-xl border border-[#A6E3E9] overflow-hidden shadow-sm">
+                    <div className="px-4 py-2.5 bg-[#CBF1F5]/60 border-b border-[#A6E3E9] text-xs font-mono font-bold text-[#083344] flex items-center justify-between">
+                      <span>4 Core Data Categories to Fetch from GitHub API</span>
+                      <span className="text-[10px] text-[#164E63]">REST API v3 / GraphQL</span>
+                    </div>
+
+                    <div className="divide-y divide-[#A6E3E9]/50 text-xs">
+                      {/* Feed 1: Dependabot */}
+                      <div className="p-4 space-y-1.5">
+                        <div className="flex items-center justify-between font-mono">
+                          <span className="font-extrabold text-[#0C262D]">1. Dependabot Security Alerts (SCA)</span>
+                          <span className="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded font-bold">
+                            GET /repos/{`{owner}`}/{`{repo}`}/dependabot/alerts
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#164E63]">
+                          <strong>Required Fields:</strong> <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">security_advisory.cve_id</code>, <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">security_advisory.cvss.score</code>, <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">dependency.package.name</code>, <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">state</code>
+                        </p>
+                        <p className="text-[11px] text-[#083344]">
+                          <strong>OpenFAIR Mapping:</strong> Maps CVE & CVSS to Vulnerability % (<code className="font-mono">Vuln</code>) and Threat Event Frequency (<code className="font-mono">TEF</code>) to compute Expected Annual Loss ($EAL).
+                        </p>
+                      </div>
+
+                      {/* Feed 2: Secret Scanning */}
+                      <div className="p-4 space-y-1.5">
+                        <div className="flex items-center justify-between font-mono">
+                          <span className="font-extrabold text-[#0C262D]">2. Secret Scanning Alerts (Credential Leaks)</span>
+                          <span className="text-[10px] bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold">
+                            GET /repos/{`{owner}`}/{`{repo}`}/secret-scanning/alerts
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#164E63]">
+                          <strong>Required Fields:</strong> <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">secret_type</code> (e.g. AWS access key, private RSA key), <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">state</code>, <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">created_at</code>
+                        </p>
+                        <p className="text-[11px] text-[#083344]">
+                          <strong>OpenFAIR Mapping:</strong> Multiplies Threat Event Frequency (<code className="font-mono">TEF</code>) by 5.0x because leaked credentials immediately allow pre-auth lateral traversal into internal databases.
+                        </p>
+                      </div>
+
+                      {/* Feed 3: CodeQL Code Scanning */}
+                      <div className="p-4 space-y-1.5">
+                        <div className="flex items-center justify-between font-mono">
+                          <span className="font-extrabold text-[#0C262D]">3. CodeQL Code Scanning Alerts (SAST)</span>
+                          <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">
+                            GET /repos/{`{owner}`}/{`{repo}`}/code-scanning/alerts
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#164E63]">
+                          <strong>Required Fields:</strong> <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">rule.id</code> (SQL injection, SSRF), <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">rule.security_severity_level</code>, <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">tool.name</code>
+                        </p>
+                        <p className="text-[11px] text-[#083344]">
+                          <strong>OpenFAIR Mapping:</strong> Evaluates internal application code attack surface and control deficiency prior to release.
+                        </p>
+                      </div>
+
+                      {/* Feed 4: Repositories (CMDB Assets) */}
+                      <div className="p-4 space-y-1.5">
+                        <div className="flex items-center justify-between font-mono">
+                          <span className="font-extrabold text-[#0C262D]">4. Repository Asset CMDB (Asset Inventory)</span>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
+                            GET /orgs/{`{org}`}/repos
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#164E63]">
+                          <strong>Required Fields:</strong> <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">name</code>, <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">visibility</code> (public/private), <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">default_branch</code>, <code className="bg-[#CBF1F5]/60 px-1 py-0.5 rounded text-[#083344]">language</code>
+                        </p>
+                        <p className="text-[11px] text-[#083344]">
+                          <strong>OpenFAIR Mapping:</strong> Automatically registers codebase assets into the CMDB asset registry and classifies their financial impact tier.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sample Payload Code Box */}
+                  <div className="p-4 bg-[#0C262D] text-white rounded-xl font-mono text-[11px] space-y-2">
+                    <div className="text-[#71C9CE] font-bold text-xs flex items-center justify-between">
+                      <span>Sample GitHub Telemetry JSON Payload</span>
+                      <span className="text-[10px] text-gray-400">Can be ingested via POST /api/connectors/findings</span>
+                    </div>
+                    <pre className="text-gray-300 overflow-x-auto p-2 bg-black/30 rounded">
+{`{
+  "source": "github_dependabot",
+  "repository": "acme/payment-gateway",
+  "alerts": [
+    {
+      "cve": "CVE-2024-45296",
+      "package": "axios",
+      "cvss": 9.1,
+      "severity": "critical",
+      "status": "open",
+      "exploit_available": true
+    },
+    {
+      "cve": "GH-SEC-AWS-KEY",
+      "type": "secret_leak",
+      "secret": "aws_access_key_id",
+      "severity": "critical",
+      "status": "open"
+    }
+  ]
+}`}
+                    </pre>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1534,7 +1685,7 @@ export default function DashboardPage() {
         {/* ============================================================ */}
         {/* TAB 4: COMPLIANCE & AUDIT TRAIL (AUDITOR)                    */}
         {/* ============================================================ */}
-        {activeTab === "auditor" && (currentRole === "auditor" || currentRole === "admin") && (
+        {activeTab === "auditor" && currentRole === "auditor" && (
           <div className="space-y-6">
             {/* Read-Only Assurance Notice */}
             <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-between text-xs shadow-sm">

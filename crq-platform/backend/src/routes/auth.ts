@@ -103,10 +103,21 @@ authRouter.post("/login", (req: Request, res: Response) => {
     return res.status(400).json({ error: "Email is required" });
   }
 
-  const user = dbStore.getUserByEmail(email);
+  const cleanEmail = email.trim().toLowerCase();
+  let roleOverride: Role | undefined;
+  if (cleanEmail === "admin" || cleanEmail.startsWith("admin@")) roleOverride = "admin";
+  else if (cleanEmail === "ciso" || cleanEmail.startsWith("ciso@")) roleOverride = "ciso";
+  else if (cleanEmail === "analyst" || cleanEmail.startsWith("analyst@")) roleOverride = "analyst";
+  else if (cleanEmail === "auditor" || cleanEmail.startsWith("auditor@")) roleOverride = "auditor";
+
+  let user = dbStore.getUserByEmail(cleanEmail);
+  if (!user && roleOverride) {
+    user = dbStore.getUserByEmail(`${roleOverride}@acme-fin.com`);
+  }
+
   if (!user) {
-    // If not found, automatically provision for smooth exploration
-    const newUser = dbStore.createUser(orgId, email, email.split("@")[0], "ciso");
+    const assignedRole: Role = roleOverride || "ciso";
+    const newUser = dbStore.createUser(orgId, cleanEmail.includes("@") ? cleanEmail : `${cleanEmail}@acme-fin.com`, cleanEmail.split("@")[0], assignedRole);
     const token = signToken(newUser.id, orgId, newUser.role);
     const org = dbStore.getOrg(orgId);
     return res.json({ success: true, token, user: newUser, organization: org });
