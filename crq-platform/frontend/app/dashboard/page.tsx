@@ -118,6 +118,12 @@ export default function DashboardPage() {
   const [secRecords, setSecRecords] = useState(145000);
   const [secResult, setSecResult] = useState<any>(null);
 
+  // Navigation & View Mode
+  const [authChecked, setAuthChecked] = useState(false);
+  const [cockpitViewMode, setCockpitViewMode] = useState<"chart" | "systemMap">("chart");
+  const [selectedSystemNode, setSelectedSystemNode] = useState<string>("db");
+  const [systemMapSimulation, setSystemMapSimulation] = useState<"compromised" | "shielded">("compromised");
+
   // Invite user state
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("analyst");
@@ -126,9 +132,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("aegis_token") : null;
     if (!token) {
-      router.push("/login");
+      setAuthChecked(false);
+      router.replace("/login");
       return;
     }
+    setAuthChecked(true);
 
     const storedRole = (localStorage.getItem("aegis_role") as Role) || "ciso";
     const storedUserStr = typeof window !== "undefined" ? localStorage.getItem("aegis_user") : null;
@@ -150,11 +158,10 @@ export default function DashboardPage() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("aegis_token");
-    localStorage.removeItem("aegis_role");
-    localStorage.removeItem("aegis_user");
-    localStorage.removeItem("aegis_org");
-    router.push("/login");
+    localStorage.clear();
+    sessionStorage.clear();
+    setAuthChecked(false);
+    router.replace("/login");
   };
 
   const userInitials = currentUser?.name
@@ -396,6 +403,22 @@ export default function DashboardPage() {
       incident,
     };
   });
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-[#E3FDFD] flex flex-col items-center justify-center p-6 selection:bg-[#71C9CE] selection:text-[#042F2E]">
+        <div className="flex items-center gap-4 p-7 bg-white rounded-3xl border border-[#A6E3E9] shadow-xl max-w-sm w-full">
+          <div className="w-12 h-12 rounded-2xl bg-[#CBF1F5] flex items-center justify-center border border-[#71C9CE] shrink-0">
+            <ShieldCheck className="w-6 h-6 text-[#083344] animate-pulse" />
+          </div>
+          <div>
+            <div className="text-sm font-extrabold text-[#0C262D]">Verifying Corporate Session...</div>
+            <div className="text-xs text-[#164E63] mt-0.5">Enforcing zero-trust tenant role isolation</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#E3FDFD] text-[#0C262D] flex flex-col selection:bg-[#71C9CE] selection:text-[#042F2E]">
@@ -705,32 +728,56 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Historical Risk Movement Chart */}
+            {/* Historical Risk Movement Chart & Live System Architecture Map */}
             <div className="p-6 rounded-2xl bg-[#CBF1F5] border border-[#A6E3E9] space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#A6E3E9]/70 pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-[#0C262D] flex items-center gap-2">
-                    <span>Historical Financial Risk Trend Line</span>
+                    <span>
+                      {cockpitViewMode === "chart"
+                        ? "Historical Financial Risk Trend Line"
+                        : "Live System Architecture & Telemetry Topology Map"}
+                    </span>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#71C9CE]/30 text-[#083344] font-bold">
-                      Interactive Drilldown
+                      {cockpitViewMode === "chart" ? "Stable OpenFAIR View" : "Data Sheet Connected"}
                     </span>
                   </h3>
-                  <p className="text-xs text-[#164E63]">Point-in-time EAL and 95% VaR movements across continuous re-calculations</p>
+                  <p className="text-xs text-[#164E63]">
+                    {cockpitViewMode === "chart"
+                      ? "Point-in-time EAL and 95% VaR movements. Click individual pins to expand incident maps and root causes."
+                      : "Visual topology of enterprise infrastructure, telemetry data sheets (GitHub, SIEM, IAM), and cascading failure propagation."}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-3 text-xs font-mono mr-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#083344]" />
-                      <span className="text-[#083344] font-bold">EAL ($M)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#71C9CE]" />
-                      <span className="text-[#164E63] font-bold">95% VaR ($M)</span>
-                    </div>
+
+                {/* View Switcher: Financial Curve vs System Architecture Map */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#A6E3E9] shadow-sm text-xs font-mono">
+                    <button
+                      onClick={() => setCockpitViewMode("chart")}
+                      className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                        cockpitViewMode === "chart"
+                          ? "bg-[#71C9CE] text-[#042F2E] shadow-sm"
+                          : "text-[#164E63] hover:text-[#0C262D]"
+                      }`}
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>Financial Curve</span>
+                    </button>
+                    <button
+                      onClick={() => setCockpitViewMode("systemMap")}
+                      className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                        cockpitViewMode === "systemMap"
+                          ? "bg-[#71C9CE] text-[#042F2E] shadow-sm"
+                          : "text-[#164E63] hover:text-[#0C262D]"
+                      }`}
+                    >
+                      <Server className="w-3.5 h-3.5" />
+                      <span>System Topology Map</span>
+                    </button>
                   </div>
 
-                  {/* Interactive Map Category Quick Switchers */}
-                  <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-xl border border-[#A6E3E9] shadow-sm">
+                  {/* Incident Quick Switchers */}
+                  <div className="flex flex-wrap items-center gap-1 bg-white p-1 rounded-xl border border-[#A6E3E9] shadow-sm">
                     <button
                       onClick={() => {
                         setSelectedPointLabel("T-18d (Security Alert: CVE-2024-55591 Pre-Auth RCE)");
@@ -738,10 +785,9 @@ export default function DashboardPage() {
                         setShowFailureMapModal(true);
                       }}
                       className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-mono font-bold flex items-center gap-1 transition-all"
-                      title="View Threat Alert Map"
                     >
-                      <Zap className="w-3 h-3 text-amber-700" />
-                      <span>Alerts (ALT-9041)</span>
+                      <AlertTriangle className="w-3 h-3 text-amber-700" />
+                      <span>Threat Alert</span>
                     </button>
 
                     <button
@@ -751,10 +797,9 @@ export default function DashboardPage() {
                         setShowFailureMapModal(true);
                       }}
                       className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200 text-[11px] font-mono font-bold flex items-center gap-1 transition-all"
-                      title="View System Failure & Blast Radius Map"
                     >
                       <AlertTriangle className="w-3 h-3 text-rose-700" />
-                      <span>Failure Map (3 Breakdowns)</span>
+                      <span>Failure Map</span>
                     </button>
 
                     <button
@@ -764,10 +809,9 @@ export default function DashboardPage() {
                         setShowFailureMapModal(true);
                       }}
                       className="px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 text-[11px] font-mono font-bold flex items-center gap-1 transition-all"
-                      title="View Log Activity & Audit Map"
                     >
                       <Terminal className="w-3 h-3 text-sky-700" />
-                      <span>Logs (5 Events)</span>
+                      <span>SIEM Logs</span>
                     </button>
 
                     <button
@@ -777,7 +821,6 @@ export default function DashboardPage() {
                         setShowFailureMapModal(true);
                       }}
                       className="px-2.5 py-1 rounded-lg bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] text-[11px] font-mono font-black flex items-center gap-1 transition-all shadow-sm"
-                      title="Simulate Optimal Solution"
                     >
                       <Sparkles className="w-3 h-3 text-[#042F2E]" />
                       <span>Simulate Fix (-99.4%)</span>
@@ -786,213 +829,427 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Chart Canvas with Interactive Clickable Graph Points */}
-              <div className="h-64 w-full bg-white p-4 rounded-xl border border-[#A6E3E9] transition-all relative">
-                <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-lg bg-[#083344] text-white text-[10px] font-mono font-bold shadow-md flex items-center gap-1.5 pointer-events-none">
-                  <span className="w-2 h-2 rounded-full bg-[#71C9CE] animate-ping" />
-                  <span>Click individual pins (Alert, Failure, Log, Fix) on the curve to inspect</span>
-                </div>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trendChartData}>
-                    <defs>
-                      <linearGradient id="ealGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#083344" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#083344" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="varGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#71C9CE" stopOpacity={0.45} />
-                        <stop offset="95%" stopColor="#71C9CE" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="name" stroke="#164E63" fontSize={11} />
-                    <YAxis stroke="#164E63" fontSize={11} tickFormatter={(v) => `$${v}M`} />
-                    <Tooltip
-                      content={({ active, payload, label }: any) => {
-                        if (active && payload && payload.length) {
-                          const d = payload[0].payload;
-                          const inc = d.incident;
-                          return (
-                            <div className="bg-[#0C262D] text-white p-3 rounded-xl border-2 border-[#71C9CE] shadow-2xl text-xs max-w-xs space-y-1.5 font-mono">
-                              <div className="flex items-center justify-between border-b border-[#71C9CE]/40 pb-1">
-                                <span className="font-extrabold text-[#71C9CE] text-sm">{d.name}</span>
-                                <span className="text-[10px] text-[#A6E3E9] uppercase font-bold">OpenFAIR Quant</span>
-                              </div>
-                              <div className="flex justify-between gap-4 text-[11px]">
-                                <span className="text-gray-300">Expected Annual Loss:</span>
-                                <span className="font-extrabold text-white">${d.eal}M</span>
-                              </div>
-                              <div className="flex justify-between gap-4 text-[11px]">
-                                <span className="text-gray-300">95% Value at Risk:</span>
-                                <span className="font-extrabold text-[#71C9CE]">${d.var95}M</span>
-                              </div>
-                              {inc && (
-                                <div className="pt-2 border-t border-white/20 space-y-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: inc.color }} />
-                                    <span className="text-[11px] font-black" style={{ color: inc.color }}>
-                                      {inc.label}
-                                    </span>
-                                  </div>
-                                  <p className="text-[10px] text-gray-300 font-sans leading-tight">{inc.desc}</p>
-                                  <div className="text-[10px] text-[#71C9CE] font-bold underline cursor-pointer pt-1">
-                                    👉 Click to expand {inc.badge} Map & Simulation
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
+              {/* VIEW 1: Stable Financial Area Chart (No repetitive sliding animation, Instant Tooltip with no bouncing pings) */}
+              {cockpitViewMode === "chart" && (
+                <div className="h-64 w-full bg-white p-4 rounded-xl border border-[#A6E3E9] transition-all relative">
+                  <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-lg bg-[#083344] text-white text-[10px] font-mono font-bold shadow-md flex items-center gap-1.5 pointer-events-none">
+                    <span className="w-2 h-2 rounded-full bg-[#71C9CE]" />
+                    <span>Click individual pins (Alert, Failure, Log, Fix) on the curve to inspect</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={trendChartData}
+                      onClick={(e: any) => {
+                        if (e && e.activePayload && e.activePayload.length > 0) {
+                          const payload = e.activePayload[0].payload;
+                          if (payload?.incident) {
+                            setSelectedPointLabel(`${payload.name}: ${payload.incident.label}`);
+                            setFailureMapMode(payload.incident.type);
+                            setShowFailureMapModal(true);
+                          }
                         }
-                        return null;
                       }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="var95"
-                      stroke="#71C9CE"
-                      fill="url(#varGrad)"
-                      strokeWidth={2.5}
-                      name="95% VaR"
-                      dot={(props: any) => {
-                        const { cx, cy, payload, index } = props;
-                        if (!payload?.incident) return <g key={`dot-empty-${payload?.name}`} />;
-                        const inc = payload.incident;
-                        const isLast = index === trendChartData.length - 1;
-                        const isFirst = index === 0;
-                        const badgeOffsetX = isLast ? cx - 74 : isFirst ? cx - 4 : cx - 36;
-                        return (
-                          <g
-                            key={`inc-dot-${payload.name}`}
-                            className="cursor-pointer group"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedPointLabel(`${payload.name}: ${inc.label}`);
-                              setFailureMapMode(inc.type);
-                              setShowFailureMapModal(true);
-                            }}
-                          >
-                            {/* Generous Clickable Hit Target */}
-                            <circle cx={cx} cy={cy} r={22} fill="transparent" />
+                    >
+                      <defs>
+                        <linearGradient id="ealGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#083344" stopOpacity={0.35} />
+                          <stop offset="95%" stopColor="#083344" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="varGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#71C9CE" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="#71C9CE" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" stroke="#164E63" fontSize={11} />
+                      <YAxis stroke="#164E63" fontSize={11} tickFormatter={(v) => `$${v}M`} />
+                      <Tooltip
+                        isAnimationActive={false}
+                        animationDuration={0}
+                        cursor={false}
+                        wrapperStyle={{
+                          transition: "none !important",
+                          animation: "none !important",
+                          outline: "none",
+                          pointerEvents: "none",
+                        }}
+                        content={({ active, payload }: any) => {
+                          if (active && payload && payload.length) {
+                            const d = payload[0].payload;
+                            const inc = d.incident;
+                            return (
+                              <div className="bg-[#0C262D] text-white p-3 rounded-xl border-2 border-[#71C9CE] shadow-2xl text-xs max-w-xs space-y-1.5 font-mono select-none">
+                                <div className="flex items-center justify-between border-b border-[#71C9CE]/40 pb-1">
+                                  <span className="font-extrabold text-[#71C9CE] text-sm">{d.name}</span>
+                                  <span className="text-[10px] text-[#A6E3E9] uppercase font-bold">OpenFAIR Quant</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-[11px]">
+                                  <span className="text-gray-300">Expected Annual Loss:</span>
+                                  <span className="font-extrabold text-white">${d.eal}M</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-[11px]">
+                                  <span className="text-gray-300">95% Value at Risk:</span>
+                                  <span className="font-extrabold text-[#71C9CE]">${d.var95}M</span>
+                                </div>
+                                {inc && (
+                                  <div className="pt-2 border-t border-white/20 space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: inc.color }} />
+                                      <span className="text-[11px] font-black" style={{ color: inc.color }}>
+                                        {inc.label}
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-300 font-sans leading-tight">{inc.desc}</p>
+                                    <div className="text-[10px] text-[#71C9CE] font-bold underline cursor-pointer pt-1">
+                                      👉 Click pin or chart to open {inc.badge} Map & Simulation
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Area
+                        isAnimationActive={false}
+                        type="monotone"
+                        dataKey="var95"
+                        stroke="#71C9CE"
+                        fill="url(#varGrad)"
+                        strokeWidth={2.5}
+                        name="95% VaR"
+                        dot={(props: any) => {
+                          const { cx, cy, payload, index } = props;
+                          if (!payload?.incident) return <g key={`dot-empty-${payload?.name}`} />;
+                          const inc = payload.incident;
+                          const isLast = index === trendChartData.length - 1;
+                          const isFirst = index === 0;
+                          const badgeOffsetX = isLast ? cx - 74 : isFirst ? cx - 4 : cx - 36;
+                          return (
+                            <g
+                              key={`inc-dot-${payload.name}`}
+                              className="cursor-pointer group"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPointLabel(`${payload.name}: ${inc.label}`);
+                                setFailureMapMode(inc.type);
+                                setShowFailureMapModal(true);
+                              }}
+                            >
+                              {/* Generous Clickable Hit Target */}
+                              <circle cx={cx} cy={cy} r={22} fill="transparent" />
 
-                            {/* Pulsing Radar Ring */}
-                            <circle
-                              cx={cx}
-                              cy={cy}
-                              r={12}
-                              fill="none"
-                              stroke={inc.color}
-                              strokeWidth={2}
-                              className="animate-ping opacity-75"
-                            />
-
-                            {/* Solid Marker Node */}
-                            <circle
-                              cx={cx}
-                              cy={cy}
-                              r={8}
-                              fill={inc.color}
-                              stroke="#ffffff"
-                              strokeWidth={2.5}
-                              className="shadow-lg"
-                            />
-
-                            {/* Inner Dot */}
-                            <circle cx={cx} cy={cy} r={3} fill="#ffffff" />
-
-                            {/* Interactive Floating Badge Tag */}
-                            <g transform={`translate(${badgeOffsetX}, ${cy - 26})`}>
-                              <rect
-                                width={72}
-                                height={18}
-                                rx={9}
-                                fill="#0C262D"
+                              {/* Steady Static Outer Ring (No repetitive ping animation) */}
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r={12}
+                                fill="none"
                                 stroke={inc.color}
-                                strokeWidth={1.5}
-                                className="shadow-md"
+                                strokeWidth={2}
+                                opacity={0.5}
                               />
-                              <text
-                                x={36}
-                                y={12}
-                                textAnchor="middle"
-                                fill="#ffffff"
-                                fontSize={9}
-                                fontFamily="monospace"
-                                fontWeight="bold"
-                              >
-                                {inc.badge}
-                              </text>
+
+                              {/* Solid Marker Node */}
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r={8}
+                                fill={inc.color}
+                                stroke="#ffffff"
+                                strokeWidth={2.5}
+                                className="shadow-lg"
+                              />
+
+                              {/* Inner Dot */}
+                              <circle cx={cx} cy={cy} r={3} fill="#ffffff" />
+
+                              {/* Interactive Floating Badge Tag */}
+                              <g transform={`translate(${badgeOffsetX}, ${cy - 26})`}>
+                                <rect
+                                  width={72}
+                                  height={18}
+                                  rx={9}
+                                  fill="#0C262D"
+                                  stroke={inc.color}
+                                  strokeWidth={1.5}
+                                  className="shadow-md"
+                                />
+                                <text
+                                  x={36}
+                                  y={12}
+                                  textAnchor="middle"
+                                  fill="#ffffff"
+                                  fontSize={9}
+                                  fontFamily="monospace"
+                                  fontWeight="bold"
+                                >
+                                  {inc.badge}
+                                </text>
+                              </g>
                             </g>
-                          </g>
-                        );
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="eal"
-                      stroke="#083344"
-                      fill="url(#ealGrad)"
-                      strokeWidth={2.5}
-                      name="EAL"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Interactive Timeline Event Drilldown Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#A6E3E9]/60">
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#164E63] font-bold">
-                  <Compass className="w-3.5 h-3.5 text-[#083344]" />
-                  <span>Click timeline point to expand interactive architecture & attack map:</span>
+                          );
+                        }}
+                      />
+                      <Area
+                        isAnimationActive={false}
+                        type="monotone"
+                        dataKey="eal"
+                        stroke="#083344"
+                        fill="url(#ealGrad)"
+                        strokeWidth={2.5}
+                        name="EAL"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedPointLabel("T-18d (Security Alert: CVE-2024-55591 Pre-Auth RCE)");
-                      setFailureMapMode("alert");
-                      setShowFailureMapModal(true);
-                    }}
-                    className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-amber-600 animate-ping" />
-                    <span>📍 T-18d | ⚡ Threat Alert: Pre-Auth RCE</span>
-                  </button>
+              )}
 
-                  <button
-                    onClick={() => {
-                      setSelectedPointLabel("T-15d (System Failure: SPoF & Blast Radius Spike to $27.3M)");
-                      setFailureMapMode("failure");
-                      setShowFailureMapModal(true);
-                    }}
-                    className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-900 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
-                    <span>📍 T-15d | 🚨 System Failure ($27.3M Spike)</span>
-                  </button>
+              {/* VIEW 2: Interactive System Architecture & Telemetry Topology Map (Data Sheet Connected) */}
+              {cockpitViewMode === "systemMap" && (
+                <div className="bg-white p-6 rounded-xl border border-[#A6E3E9] space-y-4 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#A6E3E9]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-extrabold uppercase text-[#083344]">Architecture Topology:</span>
+                      <span className="text-xs text-[#164E63] font-medium">Click any node below to inspect connected data sheets & telemetry</span>
+                    </div>
 
-                  <button
-                    onClick={() => {
-                      setSelectedPointLabel("T-9d (SIEM Forensic Log Activity: Lateral Exfiltration)");
-                      setFailureMapMode("log");
-                      setShowFailureMapModal(true);
-                    }}
-                    className="px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-300 text-sky-900 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-sky-600" />
-                    <span>📍 T-9d | 📋 SIEM Log: Lateral Exfil (4.2GB)</span>
-                  </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSystemMapSimulation(systemMapSimulation === "compromised" ? "shielded" : "compromised")}
+                        className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          systemMapSimulation === "compromised"
+                            ? "bg-rose-100 text-rose-900 border border-rose-300"
+                            : "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                        }`}
+                      >
+                        {systemMapSimulation === "compromised" ? (
+                          <>
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-700" />
+                            <span>Active Breach Mode ($27.3M Blast)</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Shielded Architecture Fix (-99.4%)</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => {
-                      setSelectedPointLabel("T-3d (Simulated Optimal Solution Architecture)");
-                      setFailureMapMode("solution");
-                      setShowFailureMapModal(true);
-                    }}
-                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-950 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>📍 T-3d | ✨ Simulate Optimal Fix (-99.4%)</span>
-                  </button>
+                  {/* Topological Node Graph */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Node 1: GitHub Repositories */}
+                    <div
+                      onClick={() => setSelectedSystemNode("github")}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        selectedSystemNode === "github"
+                          ? "bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-md ring-2 ring-[#71C9CE]/30"
+                          : "bg-slate-50 border-slate-200 hover:border-[#71C9CE]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-bold">
+                          SOURCE CODE / CI-CD
+                        </span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                          DATA SHEET LIVE
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#0C262D] mt-2">GitHub Repositories</h4>
+                      <p className="text-[11px] text-[#164E63] mt-0.5 font-mono">github.com/acme-fin/*</p>
+                      <div className="mt-3 pt-2 border-t border-[#A6E3E9] text-[10px] space-y-1 font-mono">
+                        <div className="text-rose-700 font-bold">4 Dependabot CVEs • 1 Secret Leak</div>
+                        <div className="text-[#164E63]">Feed: Dependabot Alerts API</div>
+                      </div>
+                    </div>
+
+                    {/* Node 2: Bastion Edge Ingress */}
+                    <div
+                      onClick={() => setSelectedSystemNode("ingress")}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        selectedSystemNode === "ingress"
+                          ? "bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-md ring-2 ring-[#71C9CE]/30"
+                          : "bg-slate-50 border-slate-200 hover:border-[#71C9CE]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">
+                          EDGE PERIMETER
+                        </span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">
+                          BREACH VECTOR
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#0C262D] mt-2">Bastion Ingress & Peering</h4>
+                      <p className="text-[11px] text-[#164E63] mt-0.5 font-mono">198.51.100.24:443 (Akira Target)</p>
+                      <div className="mt-3 pt-2 border-t border-[#A6E3E9] text-[10px] space-y-1 font-mono">
+                        <div className="text-rose-700 font-bold">CVE-2024-55591 Pre-Auth RCE</div>
+                        <div className="text-[#164E63]">Feed: AWS VPC Flow Logs / Zeek</div>
+                      </div>
+                    </div>
+
+                    {/* Node 3: IAM & Hardware MFA */}
+                    <div
+                      onClick={() => setSelectedSystemNode("iam")}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        selectedSystemNode === "iam"
+                          ? "bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-md ring-2 ring-[#71C9CE]/30"
+                          : "bg-slate-50 border-slate-200 hover:border-[#71C9CE]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-bold">
+                          IDENTITY & ACCESS
+                        </span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-800 font-bold">
+                          70% FIDO2
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#0C262D] mt-2">Okta IAM & SSH Bastion Key</h4>
+                      <p className="text-[11px] text-[#164E63] mt-0.5 font-mono">auth.internal.acme-fin.com</p>
+                      <div className="mt-3 pt-2 border-t border-[#A6E3E9] text-[10px] space-y-1 font-mono">
+                        <div className="text-amber-700 font-bold">Unenforced Hardware Token Key</div>
+                        <div className="text-[#164E63]">Feed: Okta System Log Telemetry</div>
+                      </div>
+                    </div>
+
+                    {/* Node 4: Core Banking API Microservices */}
+                    <div
+                      onClick={() => setSelectedSystemNode("k8s")}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        selectedSystemNode === "k8s"
+                          ? "bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-md ring-2 ring-[#71C9CE]/30"
+                          : "bg-slate-50 border-slate-200 hover:border-[#71C9CE]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold">
+                          CORE WORKLOAD
+                        </span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                          75% EDR FLEET
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#0C262D] mt-2">Core Banking K8s Cluster</h4>
+                      <p className="text-[11px] text-[#164E63] mt-0.5 font-mono">k8s-prod.us-east-1.internal</p>
+                      <div className="mt-3 pt-2 border-t border-[#A6E3E9] text-[10px] space-y-1 font-mono">
+                        <div className="text-emerald-700 font-bold">CrowdStrike Falcon Agent Active</div>
+                        <div className="text-[#164E63]">Feed: K8s Audit Telemetry</div>
+                      </div>
+                    </div>
+
+                    {/* Node 5: Primary Customer PostgreSQL DB */}
+                    <div
+                      onClick={() => setSelectedSystemNode("db")}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        selectedSystemNode === "db"
+                          ? "bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-md ring-2 ring-[#71C9CE]/30"
+                          : "bg-slate-50 border-slate-200 hover:border-[#71C9CE]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">
+                          CROWN JEWEL DATA
+                        </span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-200 text-rose-900 font-bold">
+                          $27.3M BLAST RADIUS
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#0C262D] mt-2">PostgreSQL Production Cluster</h4>
+                      <p className="text-[11px] text-[#164E63] mt-0.5 font-mono">db-master.internal:5432</p>
+                      <div className="mt-3 pt-2 border-t border-[#A6E3E9] text-[10px] space-y-1 font-mono">
+                        <div className="text-rose-700 font-bold">4.2 GB Exfiltrated Dump Trace</div>
+                        <div className="text-[#164E63]">Feed: PostgreSQL pg_audit Stream</div>
+                      </div>
+                    </div>
+
+                    {/* Node 6: Cloud Disaster Recovery & Cold Vault */}
+                    <div
+                      onClick={() => setSelectedSystemNode("backup")}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        selectedSystemNode === "backup"
+                          ? "bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-md ring-2 ring-[#71C9CE]/30"
+                          : "bg-slate-50 border-slate-200 hover:border-[#71C9CE]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                          IMMUTABLE COLD STORAGE
+                        </span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                          SHIELDED
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#0C262D] mt-2">Disaster Recovery Warm Standby</h4>
+                      <p className="text-[11px] text-[#164E63] mt-0.5 font-mono">us-west-2:s3-vault-locked</p>
+                      <div className="mt-3 pt-2 border-t border-[#A6E3E9] text-[10px] space-y-1 font-mono">
+                        <div className="text-emerald-700 font-bold">Failover Standby: RTO &lt; 15 min</div>
+                        <div className="text-[#164E63]">Feed: AWS S3 Object Lock Log</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Inspector Panel for Selected Node */}
+                  <div className="p-4 rounded-xl bg-[#CBF1F5]/40 border border-[#71C9CE] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-extrabold text-[#0C262D] uppercase font-mono flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-[#083344]" />
+                        <span>Telemetry & Control Breakdown: {selectedSystemNode.toUpperCase()}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedPointLabel(`Topology Node: ${selectedSystemNode.toUpperCase()}`);
+                          setFailureMapMode(selectedSystemNode === "db" ? "failure" : selectedSystemNode === "github" ? "log" : "solution");
+                          setShowFailureMapModal(true);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] text-[10px] font-mono font-bold"
+                      >
+                        👉 Open Full 4-Pillar Incident Center
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+                      <div className="p-2.5 bg-white rounded-lg border border-[#A6E3E9]">
+                        <span className="text-[#164E63] block text-[10px] font-mono">Connected Telemetry Data Sheet</span>
+                        <strong className="text-[#083344]">
+                          {selectedSystemNode === "github" && "GitHub Dependabot & Secret Scanning API"}
+                          {selectedSystemNode === "ingress" && "AWS VPC Flow Logs + NGINX Ingress"}
+                          {selectedSystemNode === "iam" && "Okta System Logs & FIDO2 WebAuthn"}
+                          {selectedSystemNode === "k8s" && "CrowdStrike Falcon Sensor Fleet"}
+                          {selectedSystemNode === "db" && "PostgreSQL pg_audit + Splunk SIEM"}
+                          {selectedSystemNode === "backup" && "AWS S3 Immutability Logs"}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 bg-white rounded-lg border border-[#A6E3E9]">
+                        <span className="text-[#164E63] block text-[10px] font-mono">OpenFAIR Financial Impact</span>
+                        <strong className={selectedSystemNode === "db" || selectedSystemNode === "ingress" ? "text-rose-700" : "text-[#0C262D]"}>
+                          {selectedSystemNode === "github" && "$8.2M Total Codebase Exposure"}
+                          {selectedSystemNode === "ingress" && "$2.55M Direct Ingress TEF Loss"}
+                          {selectedSystemNode === "iam" && "$1.2M Credential Stuffing Risk"}
+                          {selectedSystemNode === "k8s" && "$4.5M Core Banking Microservice Exposure"}
+                          {selectedSystemNode === "db" && "$27.3M Primary Blast Radius Cascade"}
+                          {selectedSystemNode === "backup" && "Shielded: Prevents $15M Ransom Extortion"}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 bg-white rounded-lg border border-[#A6E3E9]">
+                        <span className="text-[#164E63] block text-[10px] font-mono">Recommended Architecture Fix</span>
+                        <strong className="text-emerald-700">
+                          {selectedSystemNode === "github" && "Dependabot Auto-PRs + Token Revocation"}
+                          {selectedSystemNode === "ingress" && "WAF Edge Virtual Patch Rule (0ms)"}
+                          {selectedSystemNode === "iam" && "Strict FIDO2 Hardware WebAuthn Keys"}
+                          {selectedSystemNode === "k8s" && "100% Zero-Trust Microsegmentation"}
+                          {selectedSystemNode === "db" && "Warm Read Replica + Connection Pool Throttling"}
+                          {selectedSystemNode === "backup" && "Air-Gapped Immutable Object Lock"}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
 
@@ -1120,7 +1377,7 @@ export default function DashboardPage() {
               <div className="p-4 rounded-2xl bg-[#CBF1F5] border-2 border-[#71C9CE] shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono uppercase font-bold text-[#083344]">CISA KEV Actively Exploited</span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-red-200" />
                 </div>
                 <div className="text-2xl font-black text-[#042F2E] mt-1">
                   {findings.filter((f) => !f.isPatched && f.inCisaKev).length} Critical CVEs
@@ -1195,12 +1452,6 @@ export default function DashboardPage() {
                     </button>
                   ))}
                 </div>
-
-                {currentRole === "auditor" && (
-                  <span className="px-3 py-1 rounded-xl bg-purple-100 border border-purple-300 text-purple-900 text-xs font-mono font-bold">
-                    Auditor Mode: Read-Only
-                  </span>
-                )}
               </div>
             </div>
 
@@ -1241,7 +1492,7 @@ export default function DashboardPage() {
                         </span>
                         {f.inCisaKev && (
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-extrabold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 ring-1 ring-red-300" />
                             <span>CISA KEV ACTIVE</span>
                           </span>
                         )}
@@ -1273,7 +1524,6 @@ export default function DashboardPage() {
                       {!f.isPatched && (
                         <button
                           onClick={() => handleRemediate(f.id)}
-                          disabled={currentRole === "auditor"}
                           className="px-4 py-2 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm border border-[#71C9CE] flex items-center gap-1.5"
                         >
                           <Check className="w-3.5 h-3.5" />
@@ -1404,7 +1654,6 @@ export default function DashboardPage() {
                     <input
                       type="password"
                       placeholder="••••••••••••••••••••••••••••••••"
-                      disabled={currentRole === "auditor"}
                       className="w-full px-3 py-2 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] focus:outline-none focus:border-[#71C9CE]"
                     />
                   </div>
@@ -1413,7 +1662,6 @@ export default function DashboardPage() {
                     <input
                       type="text"
                       placeholder="https://cloud.tenable.com/api/v2/findings"
-                      disabled={currentRole === "auditor"}
                       className="w-full px-3 py-2 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] focus:outline-none focus:border-[#71C9CE]"
                     />
                   </div>
@@ -1428,7 +1676,6 @@ export default function DashboardPage() {
                         alert(err.message || "Failed to configure live connector");
                       }
                     }}
-                    disabled={currentRole === "auditor"}
                     className="px-4 py-2.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs disabled:opacity-40 shadow-md border border-[#71C9CE]"
                   >
                     Save & Test Connection
@@ -1451,7 +1698,6 @@ export default function DashboardPage() {
                             type="number"
                             value={siemCritical}
                             onChange={(e) => setSiemCritical(Number(e.target.value))}
-                            disabled={currentRole === "auditor"}
                             className="w-full p-2 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] font-mono"
                           />
                         </div>
@@ -1461,7 +1707,6 @@ export default function DashboardPage() {
                             type="number"
                             value={siemHigh}
                             onChange={(e) => setSiemHigh(Number(e.target.value))}
-                            disabled={currentRole === "auditor"}
                             className="w-full p-2 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] font-mono"
                           />
                         </div>
@@ -1471,14 +1716,12 @@ export default function DashboardPage() {
                             type="number"
                             value={siemMedium}
                             onChange={(e) => setSiemMedium(Number(e.target.value))}
-                            disabled={currentRole === "auditor"}
                             className="w-full p-2 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] font-mono"
                           />
                         </div>
                       </div>
                       <button
                         type="submit"
-                        disabled={currentRole === "auditor"}
                         className="px-4 py-2.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs disabled:opacity-40 border border-[#71C9CE]"
                       >
                         Recalculate TEF from Incidents
@@ -1494,12 +1737,11 @@ export default function DashboardPage() {
                         value={csvContent}
                         onChange={(e) => setCsvContent(e.target.value)}
                         placeholder={`asset,cve,severity,cvss,exploitability,isPatched\npayment-api,CVE-2026-9921,Critical,9.8,0.85,false\ncustomer-db,CVE-2026-4412,High,8.4,0.60,false`}
-                        disabled={currentRole === "auditor"}
                         className="w-full p-3 bg-white border border-[#A6E3E9] rounded-xl text-xs font-mono text-[#0C262D] focus:outline-none focus:border-[#71C9CE]"
                       />
                       <button
                         onClick={handleUploadCsv}
-                        disabled={currentRole === "auditor" || !csvContent}
+                        disabled={!csvContent}
                         className="px-4 py-2.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs disabled:opacity-40 border border-[#71C9CE]"
                       >
                         Parse & Ingest CSV Findings
@@ -1526,7 +1768,6 @@ export default function DashboardPage() {
                         alert(err.message || "Failed to load sample data");
                       }
                     }}
-                    disabled={currentRole === "auditor"}
                     className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#E3FDFD] text-[#083344] border border-[#71C9CE] text-xs font-extrabold disabled:opacity-40 shadow-sm"
                   >
                     Load Sample Benchmark Telemetry
@@ -1556,7 +1797,7 @@ CVE-2024-43788,github.com/acme/frontend,DOMPurify HTML Sanitization Bypass (XSS)
 CVE-2024-45296,github.com/acme/payment-gw,Axios SSRF in HTTP redirect parsing,9.1,Open,Tier-1,$1450000
 CVE-2024-55591,github.com/acme/bastion-ingress,FortiOS Pre-Auth Buffer Overflow RCE,9.8,Open,Tier-1,$2550000
 GH-SEC-AWS-KEY,github.com/acme/cloud-infra,Exposed AWS IAM Administrator Secret Key,9.5,Open,Tier-1,$8200000`;
-                          await api.uploadCsvFindings(ghCsv);
+                          await api.uploadConnectorFile({ category: "telemetry", content: ghCsv, format: "csv" });
                           setUploadSuccessMsg("GitHub Data Sheet successfully ingested! 4 findings added and OpenFAIR loss recalculated.");
                           await loadAllData();
                           setTimeout(() => setUploadSuccessMsg(null), 6000);
@@ -1564,7 +1805,6 @@ GH-SEC-AWS-KEY,github.com/acme/cloud-infra,Exposed AWS IAM Administrator Secret 
                           alert(err.message || "Failed to ingest GitHub data sheet");
                         }
                       }}
-                      disabled={currentRole === "auditor"}
                       className="px-4 py-2 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-black text-xs shadow-sm flex items-center gap-1.5 shrink-0 border border-[#71C9CE]"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
@@ -2010,7 +2250,7 @@ GH-SEC-AWS-KEY,github.com/acme/cloud-infra,Exposed AWS IAM Administrator Secret 
                   <div className="space-y-5 animate-in fade-in duration-200">
                     <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 space-y-1 shadow-sm">
                       <div className="flex items-center gap-2 font-black font-mono uppercase tracking-wider text-xs">
-                        <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-600 ring-2 ring-rose-200" />
                         <span>System Failure Detected • Blast Radius & Root Cause Map</span>
                       </div>
                       <p className="text-xs text-rose-800 font-medium leading-relaxed">

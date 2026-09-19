@@ -37,3 +37,17 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #71C9CE;
 }
+
+/* Completely eliminate Recharts tooltip sliding, lag, and floating animations to prevent repetitive jitter */
+.recharts-tooltip-wrapper,
+.recharts-tooltip-wrapper * {
+  transition: none !important;
+  animation: none !important;
+  -webkit-transition: none !important;
+}
+
+.recharts-default-tooltip {
+  transition: none !important;
+  animation: none !important;
+}
+

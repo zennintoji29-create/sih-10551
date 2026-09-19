@@ -25,6 +25,13 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [authenticatingRole, setAuthenticatingRole] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("aegis_token") : null;
+    if (token) {
+      router.replace("/dashboard");
+    }
+  }, []);
+
   const performLogin = async (credentials: { email?: string; password?: string; personaRole?: string }) => {
     setLoading(true);
     setError(null);
@@ -64,8 +71,39 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E3FDFD] text-[#0C262D] flex flex-col justify-center py-12 px-6 selection:bg-[#71C9CE] selection:text-[#042F2E]">
-      <div className="max-w-xl mx-auto w-full space-y-6">
+    <div className="min-h-screen bg-[#E3FDFD] text-[#0C262D] flex flex-col selection:bg-[#71C9CE] selection:text-[#042F2E]">
+      {/* Top Navigation Header */}
+      <header className="border-b border-[#A6E3E9] bg-[#CBF1F5]/90 backdrop-blur-md sticky top-0 z-50 shadow-sm w-full">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-2 text-[#083344] font-extrabold text-lg">
+            <div className="w-8 h-8 rounded-xl bg-[#71C9CE] flex items-center justify-center text-[#042F2E] border border-[#A6E3E9] shadow-sm">
+              <ShieldCheck className="w-4 h-4 text-[#042F2E]" />
+            </div>
+            <span className="text-[#0C262D]">AegisRisk AI</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#71C9CE]/25 text-[#083344] border border-[#71C9CE] font-bold">
+              AUTH PORTAL
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="text-xs font-bold text-[#164E63] hover:text-[#0C262D] px-3 py-1.5 transition-colors"
+            >
+              Interactive Demo
+            </Link>
+            <Link
+              href="/signup"
+              className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#CBF1F5] text-[#0C262D] border border-[#A6E3E9] text-xs font-bold transition-all shadow-sm"
+            >
+              Provision Org
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 flex flex-col justify-center py-12 px-6">
+        <div className="max-w-xl mx-auto w-full space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center space-x-2 text-[#083344] font-extrabold text-2xl">
@@ -277,5 +315,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
