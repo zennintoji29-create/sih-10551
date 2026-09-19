@@ -108,15 +108,13 @@ export default function LandingPage() {
           </div>
 
           <nav className="flex items-center gap-3 text-sm font-medium">
-            <button
-              onClick={() => {
-                const el = document.getElementById("demo-preview-section");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="text-[#164E63] hover:text-[#0C262D] px-3 py-1.5 transition-colors font-bold text-xs"
+            <Link
+              href="/demo"
+              className="text-[#164E63] hover:text-[#0C262D] px-3 py-1.5 transition-colors font-bold text-xs flex items-center gap-1.5"
             >
-              Demo & Explainer
-            </button>
+              <Sparkles className="w-3.5 h-3.5 text-[#083344]" />
+              <span>Interactive Demo & Sandbox</span>
+            </Link>
 
             {isLoggedIn ? (
               <Link
@@ -162,39 +160,37 @@ export default function LandingPage() {
 
           <p className="mt-6 text-lg text-[#164E63] leading-relaxed max-w-2xl font-medium">
             AegisRisk AI replaces static annual spreadsheets with automated OpenFAIR quantification.
-            Explore the interactive demo below to see how Expected Annual Loss, Value at Risk, and ROSI
+            Explore the interactive demo sandbox to see how Expected Annual Loss, Value at Risk, and ROSI
             are calculated from live telemetry.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4 items-center">
+            <Link
+              href="/demo"
+              className="px-6 py-3.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-sm transition-all shadow-lg shadow-[#71C9CE]/30 flex items-center gap-2 border border-[#71C9CE]"
+            >
+              <Sparkles className="w-4 h-4 text-[#042F2E]" />
+              <span>Explore Interactive Demo</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
             {isLoggedIn ? (
               <Link
                 href="/dashboard"
-                className="px-6 py-3.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-sm transition-all shadow-lg shadow-[#71C9CE]/30 flex items-center gap-2 border border-[#71C9CE]"
+                className="px-6 py-3.5 rounded-xl bg-[#CBF1F5] hover:bg-white text-[#0C262D] border border-[#A6E3E9] font-bold text-sm transition-all hover:border-[#71C9CE] flex items-center gap-2 shadow-sm"
               >
                 <span>Enter Your Authenticated Dashboard</span>
-                <ArrowRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" />
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="px-6 py-3.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-sm transition-all shadow-lg shadow-[#71C9CE]/30 flex items-center gap-2 border border-[#71C9CE]"
+                className="px-6 py-3.5 rounded-xl bg-[#CBF1F5] hover:bg-white text-[#0C262D] border border-[#A6E3E9] font-bold text-sm transition-all hover:border-[#71C9CE] flex items-center gap-2 shadow-sm"
               >
                 <span>Sign In to Live Platform</span>
-                <ArrowRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" />
               </Link>
             )}
-
-            <button
-              onClick={() => {
-                const el = document.getElementById("demo-preview-section");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="px-6 py-3.5 rounded-xl bg-[#CBF1F5] hover:bg-white text-[#0C262D] border border-[#A6E3E9] font-bold text-sm transition-all hover:border-[#71C9CE] flex items-center gap-2 shadow-sm"
-            >
-              <span>Explore Interactive Demo Below</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </section>
