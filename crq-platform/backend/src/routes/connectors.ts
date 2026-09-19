@@ -12,8 +12,8 @@ connectorsRouter.get("/", authMiddleware, (req: AuthenticatedRequest, res: Respo
   res.json({ connectors });
 });
 
-// POST /api/connectors/configure — Configure Live API integration (Admin only)
-connectorsRouter.post("/configure", authMiddleware, requireRole(["admin"]), (req: AuthenticatedRequest, res: Response) => {
+// POST /api/connectors/configure — Configure Live API integration (Admin or CISO)
+connectorsRouter.post("/configure", authMiddleware, requireRole(["admin", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { category, apiKey, endpoint, pollIntervalHours } = req.body;
   if (!category) return res.status(400).json({ error: "Category is required" });
@@ -32,15 +32,16 @@ connectorsRouter.post("/configure", authMiddleware, requireRole(["admin"]), (req
   res.json({ success: true, connector: updated });
 });
 
-// POST /api/connectors/upload — Parse CSV/JSON upload (Admin or Analyst)
-connectorsRouter.post("/upload", authMiddleware, requireRole(["admin", "analyst"]), (req: AuthenticatedRequest, res: Response) => {
+// POST /api/connectors/upload — Parse CSV/JSON upload (Admin, Analyst, or CISO)
+connectorsRouter.post("/upload", authMiddleware, requireRole(["admin", "analyst", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
-  const { category = "vulnerability", content, format = "csv" } = req.body;
-  if (!content) return res.status(400).json({ error: "File content is required" });
+  const { category = "vulnerability", content, csvData, format = "csv" } = req.body;
+  const rawContent = content || csvData;
+  if (!rawContent) return res.status(400).json({ error: "File content is required" });
 
   let ingestedCount = 0;
   if (category === "vulnerability") {
-    const findings = ingestionService.parseVulnerabilityCsv(orgId, content, "manual");
+    const findings = ingestionService.parseVulnerabilityCsv(orgId, rawContent, "manual");
     if (findings.length > 0) {
       const existing = dbStore.getFindings(orgId);
       dbStore.saveFindings(orgId, [...findings, ...existing]);
@@ -64,6 +65,7 @@ connectorsRouter.post("/upload", authMiddleware, requireRole(["admin", "analyst"
   res.json({
     success: true,
     recordsIngested: ingestedCount,
+    ingestedCount,
     confidence: 0.75,
     recalculation: result,
   });
@@ -89,7 +91,7 @@ connectorsRouter.post("/sample", authMiddleware, requireRole(["admin", "ciso", "
 });
 
 // POST /api/connectors/sync — Trigger immediate pull
-connectorsRouter.post("/sync", authMiddleware, requireRole(["admin", "analyst"]), (req: AuthenticatedRequest, res: Response) => {
+connectorsRouter.post("/sync", authMiddleware, requireRole(["admin", "analyst", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { category } = req.body;
   if (!category) return res.status(400).json({ error: "Category is required" });
@@ -108,7 +110,8 @@ connectorsRouter.post("/sync", authMiddleware, requireRole(["admin", "analyst"])
 });
 
 // POST /api/connectors/siem-manual — Manual incident entry form for orgs with no SIEM
-connectorsRouter.post("/siem-manual", authMiddleware, requireRole(["admin", "analyst"]), (req: AuthenticatedRequest, res: Response) => {
+connectorsRouter.post("/siem-manual", authMiddleware, requireRole(["admin", "analyst", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
+
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { criticalAlerts = 5, highAlerts = 20, mediumAlerts = 80, probesPerDay = 2500 } = req.body;
 

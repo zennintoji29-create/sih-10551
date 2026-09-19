@@ -342,13 +342,27 @@ riskRouter.get("/audit-trail", authMiddleware, (req: AuthenticatedRequest, res: 
 
 // POST /api/risk/sec-materiality — SEC Item 106 4-day materiality assessment
 riskRouter.post("/sec-materiality", authMiddleware, (req: AuthenticatedRequest, res: Response) => {
-  const { annualRevenueUsd = 120000000, estimatedLossUsd = 2800000, recordsExposed = 145000, downtimeHours = 36 } = req.body;
+  const {
+    annualRevenueUsd = 120000000,
+    estimatedLossUsd,
+    financialLoss,
+    recordsExposed,
+    affectedRecords,
+    downtimeHours,
+    isProductionHalted,
+  } = req.body;
+
+  const actualLoss = Number(estimatedLossUsd ?? financialLoss ?? 2800000);
+  const actualRecords = Number(recordsExposed ?? affectedRecords ?? 145000);
+  const actualDowntime = Number(downtimeHours ?? (isProductionHalted ? 48 : 24));
+  const actualRevenue = Number(annualRevenueUsd ?? 120000000);
 
   // Materiality heuristic: loss > 1.5% of revenue OR records > 100k OR downtime > 24h
-  const lossPct = (Number(estimatedLossUsd) / Number(annualRevenueUsd)) * 100;
+  const lossPct = (actualLoss / actualRevenue) * 100;
   const isQuantitativelyMaterial = lossPct >= 1.5;
-  const isQualitativelyMaterial = Number(recordsExposed) > 100000 || Number(downtimeHours) > 24;
+  const isQualitativelyMaterial = actualRecords > 100000 || actualDowntime > 24;
   const isMaterial = isQuantitativelyMaterial || isQualitativelyMaterial;
+
 
   res.json({
     isMaterial,

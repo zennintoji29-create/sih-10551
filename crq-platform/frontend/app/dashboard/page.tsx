@@ -109,12 +109,15 @@ export default function DashboardPage() {
       ]);
 
       setOverview(ov);
+      if (ov?.organization) {
+        setOrg(ov.organization);
+      }
       setFindings(fnd.findings || []);
       setAssets(ast.assets || []);
       setControls(ctrl.controls || []);
       setConnectors(conn.connectors || []);
       setThirdParty(tp);
-      setAuditLogs(aud.logs || []);
+      setAuditLogs(aud.auditLogs || aud.logs || []);
       setUsers(usr.users || []);
     } catch (err: any) {
       console.error("Error loading dashboard data:", err);
@@ -135,29 +138,53 @@ export default function DashboardPage() {
     if (newRole === "ciso") setActiveTab("cockpit");
   };
 
-  // What-if simulator recompute
+  // What-if simulator recompute with live backend quantification & smooth fallback
   useEffect(() => {
-    if (!overview) return;
-    const baseEal = overview.portfolioEal || 1245000;
-    const mfaReduction = (whatIfMfa - 50) * 8500;
-    const edrReduction = (whatIfEdr - 50) * 6200;
-    const surgeMultiplier = whatIfAiSurge ? 1.45 : 1.0;
+    let isMounted = true;
+    const compute = async () => {
+      try {
+        const res = await api.runWhatIf({
+          mfaRolloutPct: whatIfMfa,
+          edrCoveragePct: whatIfEdr,
+          aiThreatSurge: whatIfAiSurge,
+        });
+        if (isMounted) {
+          setWhatIfResult({
+            projectedEal: res.simulatedEal,
+            deltaEal: res.deltaEal,
+            deltaPercentage: res.deltaPercentage,
+            projectedVaR: res.simulatedVar95,
+          });
+        }
+      } catch {
+        const baseEal = overview?.metrics?.portfolioEal || 1245000;
+        const mfaReduction = (whatIfMfa - 50) * 8500;
+        const edrReduction = (whatIfEdr - 50) * 6200;
+        const surgeMultiplier = whatIfAiSurge ? 1.45 : 1.0;
 
-    const projectedEal = Math.max(250000, (baseEal - mfaReduction - edrReduction) * surgeMultiplier);
-    const delta = projectedEal - baseEal;
+        const projectedEal = Math.max(250000, (baseEal - mfaReduction - edrReduction) * surgeMultiplier);
+        const delta = projectedEal - baseEal;
 
-    setWhatIfResult({
-      projectedEal: Math.round(projectedEal),
-      deltaEal: Math.round(delta),
-      deltaPercentage: Math.round((delta / baseEal) * 100),
-      projectedVaR: Math.round(projectedEal * 3.8),
-    });
+        if (isMounted) {
+          setWhatIfResult({
+            projectedEal: Math.round(projectedEal),
+            deltaEal: Math.round(delta),
+            deltaPercentage: Math.round((delta / baseEal) * 100),
+            projectedVaR: Math.round(projectedEal * 3.8),
+          });
+        }
+      }
+    };
+    compute();
+    return () => {
+      isMounted = false;
+    };
   }, [whatIfMfa, whatIfEdr, whatIfAiSurge, overview]);
 
   const handleRemediate = async (findingId: string) => {
     try {
-      await api.patchFinding(findingId);
-      loadAllData();
+      await api.remediateFinding(findingId);
+      await loadAllData();
     } catch (err: any) {
       alert(err.message || "Failed to remediate finding");
     }
@@ -170,9 +197,9 @@ export default function DashboardPage() {
         category: activeConnectorCat,
         csvData: csvContent,
       });
-      setUploadSuccessMsg(`Successfully ingested ${res.ingestedCount} findings. Re-quantifying...`);
+      setUploadSuccessMsg(`Successfully ingested ${res.ingestedCount ?? res.recordsIngested ?? 0} findings. Re-quantifying...`);
       setCsvContent("");
-      loadAllData();
+      await loadAllData();
       setTimeout(() => setUploadSuccessMsg(null), 5000);
     } catch (err: any) {
       alert(err.message || "Failed to upload CSV");
@@ -188,7 +215,7 @@ export default function DashboardPage() {
         mediumIncidents: siemMedium,
       });
       setUploadSuccessMsg("SIEM monthly incident telemetry submitted. TEF updated.");
-      loadAllData();
+      await loadAllData();
       setTimeout(() => setUploadSuccessMsg(null), 5000);
     } catch (err: any) {
       alert(err.message || "Failed to submit telemetry");
@@ -215,7 +242,7 @@ export default function DashboardPage() {
       await api.inviteUser({ email: inviteEmail, role: inviteRole });
       setInviteMsg(`Invite sent to ${inviteEmail} as ${inviteRole}`);
       setInviteEmail("");
-      loadAllData();
+      await loadAllData();
       setTimeout(() => setInviteMsg(null), 4000);
     } catch (err: any) {
       alert(err.message || "Failed to invite user");
@@ -231,7 +258,7 @@ export default function DashboardPage() {
     }).format(val);
   };
 
-  const metrics = overview || {
+  const metrics = overview?.metrics || {
     portfolioEal: 1245000,
     var90: 3200000,
     var95: 4850000,
@@ -239,7 +266,7 @@ export default function DashboardPage() {
     worstCaseLoss: 14200000,
     dataConfidenceIndex: 0.88,
     activeAssetsCount: 42,
-    openFindingsCount: 18,
+    activeFindingsCount: 18,
   };
 
   const currentVaR =
@@ -821,12 +848,16 @@ export default function DashboardPage() {
                     />
                   </div>
                   <button
-                    onClick={() =>
-                      api.configureLiveConnector({ category: activeConnectorCat }).then(() => {
+                    onClick={async () => {
+                      try {
+                        await api.configureLiveConnector({ category: activeConnectorCat });
                         setUploadSuccessMsg("Live API connector configured.");
-                        loadAllData();
-                      })
-                    }
+                        await loadAllData();
+                        setTimeout(() => setUploadSuccessMsg(null), 5000);
+                      } catch (err: any) {
+                        alert(err.message || "Failed to configure live connector");
+                      }
+                    }}
                     disabled={currentRole === "auditor"}
                     className="px-4 py-2.5 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-extrabold text-xs disabled:opacity-40 shadow-md border border-[#71C9CE]"
                   >
@@ -915,12 +946,16 @@ export default function DashboardPage() {
                     Switch to calibrated SIH26105 benchmark sample telemetry to explore the platform before connecting production credentials.
                   </p>
                   <button
-                    onClick={() =>
-                      api.switchConnectorToSample(activeConnectorCat).then(() => {
+                    onClick={async () => {
+                      try {
+                        await api.switchConnectorToSample(activeConnectorCat);
                         setUploadSuccessMsg(`Switched ${activeConnectorCat} to Sample Data.`);
-                        loadAllData();
-                      })
-                    }
+                        await loadAllData();
+                        setTimeout(() => setUploadSuccessMsg(null), 5000);
+                      } catch (err: any) {
+                        alert(err.message || "Failed to load sample data");
+                      }
+                    }}
                     disabled={currentRole === "auditor"}
                     className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#E3FDFD] text-[#083344] border border-[#71C9CE] text-xs font-extrabold disabled:opacity-40 shadow-sm"
                   >
