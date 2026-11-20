@@ -1,0 +1,44 @@
+TECHNICAL APPROACH
+3
+FLOW CHART
+INS
+GNSS
+LEO-PNT
+3 LAYER APPORACH
+Hardware & Software
+•
+GNSS Receiver Module (u-box ZED-
+F9P): Primary PNT source for GPS, 
+NavIC, and multi-constellation 
+tracking.
+•
+IMU (ICM20948): Backup inertial 
+navigation (INS)
+•
+Raspberry Pi 4 (4GB): Runs LEO 
+signal simulation, AI algorithms, and 
+sensor fusion.
+•
+LimeSDR (optional): Captures real 
+LEO signals or uses public datasets.
+•
+Python / NumPy / SciPy: Simulate, 
+validate, and compare LEO SoO 
+signals.
+•
+TensorFlow Lite / PyTorch 
+Mobile: AI for detecting 
+spoofed/jammed signals and selecting 
+the most reliable sources.
+•
+Battery (Li-ion 25,000 mAh): 24-hour 
+continuous operation.
+•
+3.5-inch Color TFT LCD: Displays 
+maps, navigation data, and system 
+status.
+Above 40% of the prototype is completed
+GitHub link: 
+https://github.com/sangsaist/ZyraNav.git 
+YouTube video : Link
+Helix House

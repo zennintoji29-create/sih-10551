@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, ArrowRight, Mail, Lock, Loader2 } from "lucide-react";
+import { ShieldCheck, ArrowRight, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { api, setActiveRole, setActiveOrgId } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,16 +21,22 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     if (!email.trim()) {
       setError("Please enter your corporate email.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password.");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const res = await api.login({ email: email.trim(), password });
+      const res = await api.login({ email: email.trim(), password: password });
       if (res.token) {
         localStorage.setItem("aegis_token", res.token);
         localStorage.setItem("aegis_role", res.user.role);
@@ -46,6 +53,12 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const quickFill = (roleEmail: string) => {
+    setEmail(roleEmail);
+    setPassword("admin123");
+    setError(null);
   };
 
   return (
@@ -109,13 +122,13 @@ export default function LoginPage() {
                   Corporate Work Email
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-[#164E63] absolute left-3.5 top-3" />
+                  <Mail className="w-4 h-4 text-[#164E63] absolute left-3.5 top-3.5" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ciso@acme-fin.com"
+                    placeholder="name@company.com"
                     className="w-full pl-10 pr-3 py-2.5 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] placeholder:text-gray-400 focus:outline-none focus:border-[#71C9CE] transition-all font-mono"
                   />
                 </div>
@@ -126,21 +139,73 @@ export default function LoginPage() {
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#164E63] absolute left-3.5 top-3" />
+                  <Lock className="w-4 h-4 text-[#164E63] absolute left-3.5 top-3.5" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
+                    required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full pl-10 pr-3 py-2.5 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] placeholder:text-gray-400 focus:outline-none focus:border-[#71C9CE] transition-all font-mono"
+                    placeholder="Enter your password"
+                    className="w-full pl-10 pr-10 py-2.5 bg-white border border-[#A6E3E9] rounded-xl text-xs text-[#0C262D] placeholder:text-gray-400 focus:outline-none focus:border-[#71C9CE] transition-all font-mono"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-2 p-1 rounded-lg text-[#164E63] hover:text-[#0C262D] hover:bg-[#CBF1F5]/60 transition-all cursor-pointer"
+                    title={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* 1-Click Role Quick Selection */}
+              <div className="pt-1">
+                <div className="text-[11px] font-mono text-[#164E63] font-bold mb-1.5">
+                  Quick Autofill Role:
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => quickFill("ciso@acme-fin.com")}
+                    className="py-1.5 px-2 rounded-lg bg-[#CBF1F5] hover:bg-[#71C9CE] text-[#083344] text-[11px] font-bold font-mono border border-[#A6E3E9] transition-all text-center"
+                  >
+                    CISO
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickFill("analyst@acme-fin.com")}
+                    className="py-1.5 px-2 rounded-lg bg-[#CBF1F5] hover:bg-[#71C9CE] text-[#083344] text-[11px] font-bold font-mono border border-[#A6E3E9] transition-all text-center"
+                  >
+                    Analyst
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickFill("auditor@acme-fin.com")}
+                    className="py-1.5 px-2 rounded-lg bg-[#CBF1F5] hover:bg-[#71C9CE] text-[#083344] text-[11px] font-bold font-mono border border-[#A6E3E9] transition-all text-center"
+                  >
+                    Auditor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickFill("admin@acme-fin.com")}
+                    className="py-1.5 px-2 rounded-lg bg-[#CBF1F5] hover:bg-[#71C9CE] text-[#083344] text-[11px] font-bold font-mono border border-[#A6E3E9] transition-all text-center"
+                  >
+                    Admin
+                  </button>
                 </div>
               </div>
 
               <button
                 type="submit"
+                onClick={handleLogin}
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-black text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+                className="w-full py-3 rounded-xl bg-[#71C9CE] hover:bg-[#A6E3E9] text-[#042F2E] font-black text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 mt-3 cursor-pointer active:scale-[0.99]"
               >
                 {loading ? (
                   <>

@@ -1,0 +1,50 @@
+2
+Problem: 
+Innovation/Uniqueness:
+ZyraNav: AI-Powered Cognitive Opportunistic LEO-PNT Navigation System for GNSS-
+Denied Environments
+Proposed Solution :
+Our Idea :
+Helix House
+GNSS signals are vulnerable to jamming, spoofing, and 
+blocking. In battlefields and tough terrains, this leaves 
+soldiers without reliable navigation, putting missions and 
+lives at risk
+ZyraNav is an AI-powered device with a three-layer approach 
+ensuring reliable navigation when GPS fails. It uses simulated LEO 
+signals to train adaptive algorithms for robust operation in any 
+scenario.
+•
+When GNSS fails, the system seamlessly 
+falls back to 3-layer architecture — 
+GNSS (primary), LEO SoO (secondary), 
+and inertial navigation system-INS 
+(tertiary).
+•
+A smart simulation framework 
+generates synthetic LEO SoO signals from 
+GNSS data to train and validate cognitive 
+algorithms.
+•
+An AI-enabled cognitive algorithm and 
+a Low-cost handheld device with smart 
+power management for 24-hour 
+continuous operation.
+•
+India’s first 3-layer navigation 
+system to get PNT
+•
+Transforms non-PNT LEO satellite 
+signals into usable PNT data through 
+adaptive signal conversion.
+•
+AI-powered adaptive cognitive 
+algorithm detects GNSS failure, switches 
+between LEO and INS, and performs 
+adaptive signal processing for high 
+accuracy.
+•
+Lab-based Smart Signal Simulation 
+Framework lowers development cost and 
+trains the cognitive model for real-world 
+robustness.

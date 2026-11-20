@@ -48,13 +48,40 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   next();
 }
 
+export const ROLE_HIERARCHY: Record<Role, number> = {
+  auditor: 1,
+  analyst: 2,
+  admin: 3,
+  ciso: 4,
+};
+
+export function requireMinRole(minRole: Role) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const userRole = req.user?.role || "auditor";
+    const userTier = ROLE_HIERARCHY[userRole] ?? 0;
+    const requiredTier = ROLE_HIERARCHY[minRole] ?? 99;
+
+    if (userTier < requiredTier) {
+      return res.status(403).json({
+        error: "INSUFFICIENT_ROLE_PRIVILEGE",
+        message: `Role '${userRole.toUpperCase()}' is unauthorized for this endpoint. Minimum required role tier: '${minRole.toUpperCase()}'. Access blocked by hierarchical RBAC.`,
+        activeRole: userRole,
+        requiredRole: minRole,
+        activeTier: userTier,
+        requiredTier: requiredTier,
+      });
+    }
+    next();
+  };
+}
+
 export function requireRole(allowedRoles: Role[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const userRole = req.user?.role || "auditor";
     if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
-        error: "FORBIDDEN_READ_ONLY_ROLE",
-        message: `Role ${userRole.toUpperCase()} does not have write permissions for this resource. Action blocked server-side.`,
+        error: "FORBIDDEN_ROLE_ACCESS",
+        message: `Role ${userRole.toUpperCase()} does not have permissions for this resource. Action blocked server-side.`,
         role: userRole,
       });
     }
@@ -143,8 +170,8 @@ authRouter.get("/users", authMiddleware, (req: AuthenticatedRequest, res: Respon
   res.json({ users });
 });
 
-// POST /api/auth/invite — Invite teammate with assigned role (Admin only)
-authRouter.post("/invite", authMiddleware, requireRole(["admin"]), (req: AuthenticatedRequest, res: Response) => {
+// POST /api/auth/invite — Invite teammate with assigned role (Admin & CISO)
+authRouter.post("/invite", authMiddleware, requireRole(["admin", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { email, name, role } = req.body;
   if (!email || !role) {
@@ -155,8 +182,8 @@ authRouter.post("/invite", authMiddleware, requireRole(["admin"]), (req: Authent
   res.status(201).json({ success: true, user });
 });
 
-// PATCH /api/auth/users/:id/role — Change user role (Admin only)
-authRouter.patch("/users/:id/role", authMiddleware, requireRole(["admin"]), (req: AuthenticatedRequest, res: Response) => {
+// PATCH /api/auth/users/:id/role — Change user role (Admin & CISO)
+authRouter.patch("/users/:id/role", authMiddleware, requireRole(["admin", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { id } = req.params;
   const { role } = req.body;

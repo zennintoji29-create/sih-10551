@@ -5,7 +5,7 @@ import { calculateRosi, accumulationRisk } from "../engine/rosi";
 
 export type Role = "admin" | "ciso" | "analyst" | "auditor";
 export type PlanTier = "starter" | "pro" | "enterprise";
-export type DataSourceCategory = "vulnerability" | "siem" | "asset_inventory" | "threat_intel" | "vendor";
+export type DataSourceCategory = "vulnerability" | "siem" | "asset_inventory" | "threat_intel" | "vendor" | "telemetry";
 export type ConnectorMode = "live" | "manual" | "sample";
 export type ConnectorStatus = "connected" | "error" | "not_connected";
 
@@ -56,9 +56,17 @@ export interface Finding {
   isPatched: boolean;
   inCisaKev: boolean;
   financialImpact: number; // calculated dollar exposure if unaddressed
+  originalImpact?: number; // retained when remediated for rollback/audit
   sourceMode: ConnectorMode;
   confidence: number;
   discoveredAt: string;
+  attackVector?: string;
+  cvssVector?: string;
+  description?: string;
+  remediationSteps?: string[];
+  primaryLoss?: number;
+  secondaryLoss?: number;
+  regulatoryExposure?: string;
 }
 
 export interface SiemEventSummary {
@@ -297,9 +305,21 @@ class DataStore {
         isPatched: false,
         inCisaKev: true,
         financialImpact: 480000,
+        originalImpact: 480000,
         sourceMode: "live",
         confidence: 0.95,
         discoveredAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+        attackVector: "Network (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        description: "Unauthenticated remote attackers can send crafted HTTP POST requests containing directory traversal sequences to bypass Spring RouterFunction path validation, resulting in arbitrary Java bytecode execution within the card processing cluster.",
+        remediationSteps: [
+          "Upgrade org.springframework:spring-webmvc to >= 6.2.2 or apply hotfix patch SP-2025-01.",
+          "Enable AWS WAF Managed Rule Set 'AWSManagedRulesKnownBadInputsRuleSet' on ALB target group.",
+          "Restrict container process capabilities via Kubernetes securityContext: drop ALL, readOnlyRootFilesystem: true."
+        ],
+        primaryLoss: 195000,
+        secondaryLoss: 285000,
+        regulatoryExposure: "PCI-DSS 4.0 Req 6.4.1 / SEC Item 1.05 Material Incident Threshold",
       },
       {
         id: "fnd-2",
@@ -314,9 +334,21 @@ class DataStore {
         isPatched: false,
         inCisaKev: true,
         financialImpact: 260000,
+        originalImpact: 260000,
         sourceMode: "live",
         confidence: 0.95,
         discoveredAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+        attackVector: "Network (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        description: "Heap-based buffer overflow in the Windows Remote Desktop Licensing service (MadLicense). Threat actors leverage active RPC packets on port 135/3389 to achieve system-level compromise and lateral traversal.",
+        remediationSteps: [
+          "Apply Microsoft Security Update KB5040437 or July 2024 Patch Tuesday rollup.",
+          "Disable RDC Licensing Service on internet-exposed bastion servers if not strictly required.",
+          "Enforce Network Level Authentication (NLA) via Group Policy Object (GPO)."
+        ],
+        primaryLoss: 110000,
+        secondaryLoss: 150000,
+        regulatoryExposure: "NIST CSF PR.AC-5 / DORA Art. 16 Incident Reporting",
       },
       {
         id: "fnd-3",
@@ -331,9 +363,21 @@ class DataStore {
         isPatched: false,
         inCisaKev: true,
         financialImpact: 390000,
+        originalImpact: 390000,
         sourceMode: "live",
         confidence: 0.95,
         discoveredAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+        attackVector: "Network (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        description: "Flaw in reverse-proxy authentication cookie validation enables forging of administrative JWT claims, allowing complete tenant-wide identity takeover and SSO privilege escalation.",
+        remediationSteps: [
+          "Update Okta Access Gateway to build 2024.12.0 or deploy signed patch AGW-991.",
+          "Force global session termination and invalidate all active bearer tokens across IAM clusters.",
+          "Enforce FIDO2 / WebAuthn hardware keys on all Tier-0 administrative roles."
+        ],
+        primaryLoss: 160000,
+        secondaryLoss: 230000,
+        regulatoryExposure: "SEC Item 106 Cybersecurity Governance / GDPR Art. 32 Technical Safeguards",
       },
       {
         id: "fnd-4",
@@ -348,9 +392,21 @@ class DataStore {
         isPatched: true,
         inCisaKev: false,
         financialImpact: 0,
+        originalImpact: 310000,
         sourceMode: "live",
         confidence: 0.90,
         discoveredAt: new Date(Date.now() - 12 * 86400000).toISOString(),
+        attackVector: "Network (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N)",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+        description: "Best-fit locale characters in PHP CGI module bypass parameter sanitization under Windows systems, allowing attackers to inject arbitrary command-line arguments to read database configuration files.",
+        remediationSteps: [
+          "Remediated: Upgraded PHP runtime to 8.2.20 and disabled legacy CGI wrappers.",
+          "Verified: ModSecurity CRS rule 933150 activated on reverse proxy.",
+          "Post-patch validation: Scanned with Tenable.io plugin #195143 with clean zero-exposure exit code."
+        ],
+        primaryLoss: 0,
+        secondaryLoss: 0,
+        regulatoryExposure: "HIPAA §164.312 / GDPR Fine Prevention",
       },
       {
         id: "fnd-5",
@@ -365,9 +421,21 @@ class DataStore {
         isPatched: false,
         inCisaKev: false,
         financialImpact: 75000,
+        originalImpact: 75000,
         sourceMode: "sample",
         confidence: 0.70,
         discoveredAt: new Date(Date.now() - 8 * 86400000).toISOString(),
+        attackVector: "Local Network (AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N)",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N",
+        description: "MonikerLink bug allowing NTLM credential relaying via file:// hyperlinks embedded in customer support ticketing emails without prompting user confirmation.",
+        remediationSteps: [
+          "Install Microsoft Office Security Update February 2024.",
+          "Block outbound SMB (TCP port 445) at corporate perimeter firewall to prevent NTLM hash leaks.",
+          "Deploy Protected View enforcement for all external customer message attachments."
+        ],
+        primaryLoss: 30000,
+        secondaryLoss: 45000,
+        regulatoryExposure: "NIST CSF PR.AC-1",
       },
     ];
     this.findings.set(orgId, initialFindings);
@@ -501,6 +569,16 @@ class DataStore {
       recordCount: 6,
       confidence: 0.85,
       details: "Manual vendor dependency mapping with SPoF clustering",
+    });
+    connectorMap.set("telemetry", {
+      category: "telemetry",
+      name: "GitHub / CI-CD Telemetry & Secrets",
+      status: "connected",
+      mode: "live",
+      lastSyncAt: new Date(Date.now() - 10 * 60000).toISOString(),
+      recordCount: 4,
+      confidence: 0.90,
+      details: "Software supply chain & SCA advisory scanner stream",
     });
     this.connectors.set(orgId, connectorMap);
 

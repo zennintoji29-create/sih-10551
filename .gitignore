@@ -29,3 +29,10 @@ yarn-error.log*
 *.tsbuildinfo
 *.swp
 *.swo
+
+# Large Media
+*.mp4
+*.mov
+*.avi
+*.mkv
+

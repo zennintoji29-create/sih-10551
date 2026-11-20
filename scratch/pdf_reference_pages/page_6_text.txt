@@ -1,0 +1,46 @@
+Research and Analysis
+6
+Gap & Problem Identification
+•
+Quote recent studies documenting the rise in GNSS 
+jamming/spoofing events and failures in Indian context.​ link
+•
+Show comparative performance of traditional GNSS (GPS, 
+NavIC) vs. LEO-PNT and INS in denied environments. link
+Literature Survey & Competitive Analysis
+•
+Summarize latest global and Indian research on LEO-PNT 
+market trends, strengths, and competitive technologies 
+(Starlink, Iridium, NavIC, VyomIC).​ 1. link 2. link 3. link
+•
+Present findings from peer-reviewed experiments comparing 
+GNSS, LEO, and INS fallback capabilities in real-world urban, 
+remote, and ECM scenarios. 1. link 2. link
+Technology Benchmarking
+•
+Compare accuracy, jamming resilience, and coverage of GNSS 
+with new LEO systems (e.g., meter-level positioning under 
+jamming from LEO vs. multi-meter GNSS inaccuracies).​ link
+•
+Highlight integration of AI-driven cognitive algorithms and 
+multi-sensor fusion for spoofing defense and PNT integrity.​ link
+Economic & Strategic Landscape
+•
+Market forecasts: cite projected growth of India’s LEO-PNT 
+sector and expected impacts on defense, transportation, and PPP 
+innovation 1. link 2. link
+Field Tests & Simulation Results
+•
+Include results from your own simulation/bench tests (e.g., 
+improvement in rescue operation time, accuracy rates in tunnels 
+or shadow zones). link
+•
+Reference international proof-of-concept studies showing LEO-
+aided INS tested on vehicles or UAVs achieving meter-level 
+accuracy where GNSS failed link
+Policy & Ecosystem Analysis
+•
+Mention government and military initiatives for anti-spoofing, 
+indigenous navigation frameworks, and Atmanirbhar Bharat 
+alignments. link
+Helix House

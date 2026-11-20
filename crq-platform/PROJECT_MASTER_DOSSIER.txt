@@ -1,0 +1,264 @@
+================================================================================
+AEGISRISK AI — MASTER PROJECT DOSSIER & SYSTEM KNOWLEDGE BASE
+Smart India Hackathon 2026 | Problem Statement ID: 26105
+================================================================================
+Last Updated: September 20, 2026
+Team: Inovatrix (Team ID: 131962)
+Project Title: AI-Powered Continuous Cyber Risk Quantification & Investment Optimization
+Theme: Blockchain & Cybersecurity | Category: Software
+Primary Repository: c:\Users\subha\Downloads\sih-10551\crq-platform
+GitHub Repository: https://github.com/zennintoji29-create/sih-10551.git
+================================================================================
+
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. Executive Summary & Problem Statement
+2. Actual Working Codebase (Phase 1 MVP Audit)
+3. Mathematical Models & Exact Formulas
+4. Verified Test Cases & Worked Examples
+5. Software Stack & Architecture
+6. Database Schema (PostgreSQL)
+7. Roadmap & Future Features (Phases 2–5)
+8. Presentation Deck Structure (Slides 1–6)
+9. Defensibility FAQ for Judges
+
+================================================================================
+1. EXECUTIVE SUMMARY & PROBLEM STATEMENT
+================================================================================
+Problem Statement (PS 26105):
+Enterprises manage cybersecurity using stale, subjective Red/Amber/Green (RAG)
+heatmaps refreshed once or twice a year via manual audits. These static scores go
+obsolete the moment a new zero-day drops, an EDR agent goes offline, or an attacker
+leverages GenAI tooling. Consequently, CISOs cannot prove Return on Security
+Investment (ROSI) or defend budgets to CFOs and regulators (RBI, SEBI, SEC, DORA).
+
+AegisRisk Solution:
+A continuous, cloud-ready analytics engine that ingests enterprise security
+telemetry and translates raw technical findings into real-time, defensible monetary
+loss distributions (Expected Annual Loss / EAL and Value at Risk / VaR in ₹ and $)
+using OpenFAIR™ ontology, 10,000-trial Monte Carlo simulations with Extreme Value
+Theory (EVT) fat-tail jumps, and combinatorial budget optimization.
+
+================================================================================
+2. ACTUAL WORKING CODEBASE (PHASE 1 MVP AUDIT)
+================================================================================
+Every component listed below is real, fully tested TypeScript code in crq-platform:
+
+A. CORE RISK ENGINE: backend/src/engine/fair.ts
+   - calculateFair(asset, threat, loss): Computes OpenFAIR baseline loss.
+     * LEF = effectiveTef × vulnerability × (1 - controlEffectiveness)
+     * PLM = (directCosts + indirectCosts + regulatoryCosts) × asset.criticality
+     * EAL = LEF × PLM
+   - aiAmplificationFactor: Dynamically multiplies Threat Event Frequency (TEF)
+     when adversaries leverage generative AI / automated exploit tools.
+   - aggregateEal(results): Sums portfolio EAL across all enterprise assets.
+   - attributeChange(prev, next): Deterministic explainability engine. Compares
+     two consecutive risk snapshots and identifies the exact primary driver:
+     'vulnerability' | 'threat_frequency' | 'control_effectiveness' | 'loss_magnitude'
+     Generates plain-language executive summaries (e.g. "Vulnerability moved from 0.40 to 0.70").
+
+B. MONTE CARLO & TAIL RISK ENGINE: backend/src/engine/var.ts
+   - simulateVar(results, options): Runs stochastic loss simulations.
+     * Default simulations: 10,000 trials (runs in <100ms on CPU).
+     * Random Lognormal Multiplier: Uses Box-Muller transform with sigma=0.6
+       to inject operational volatility per asset.
+     * Generalized Pareto Distribution (GPD) Jump: Evaluates a 2% tail event
+       probability; if triggered, injects a Pareto heavy-tail jump:
+       tail = r.eal * (1 / (1 - U)^tailShape), where tailShape ξ = 0.25.
+     * Outputs: 90%, 95%, 99% VaR, Mean Loss, Worst-Case Loss.
+     * Deterministic Seeding: Optional PRNG seed parameter for reproducible tests.
+
+C. ROSI & THIRD-PARTY ACCUMULATION ENGINE: backend/src/engine/rosi.ts
+   - calculateRosi(input): Computes Return on Security Investment:
+     * predictedEalReduction = ealBefore × predictedMitigationPct
+     * rosi = (predictedEalReduction - cost) / cost
+     * confidenceInterval: [predicted - spread, predicted + spread] based on confidencePct.
+   - trackRosiOutcome(predicted, observed): Closed-loop verification function.
+     Computes variance = observed - predicted and variancePct.
+   - accumulationRisk(vendors, defaultCorrelation): Models Single Point of Failure (SPoF)
+     across third-party supply chains. If multiple vendors share an infrastructure
+     dependency (e.g., AWS or CrowdStrike), applies a correlation surcharge:
+     * combinedVar = independentTotal + (spofGroupExposure × correlationFactor).
+
+D. INGESTION SERVICE: backend/src/engine/ingestion.ts
+   - parseVulnerabilityCsv(orgId, csvText, mode): Ingests raw vulnerability feeds
+     (columns: assetId, cve, severity, cvss, exploitability, isPatched).
+   - Maps CVSS scores to monetary risk and matches against registered CMDB assets.
+   - Confidence scoring: 0.95 for live telemetry, 0.75 for manual, 0.50 for synthetic.
+   - recalculateOrganizationRisk(orgId, reason): Automatically re-evaluates all
+     assets upon new telemetry, saves snapshots, and generates change attribution.
+
+E. EXPRESS REST API ROUTES: backend/src/routes/risk.ts & index.ts
+   - GET /api/risk/eal - Returns organization portfolio EAL & per-asset breakdown.
+   - GET /api/risk/var - Returns 95% and 99% VaR distribution from 10,000 iterations.
+   - POST /api/risk/rosi - Calculates ROSI for a proposed security control.
+   - POST /api/risk/third-party - Evaluates vendor concentration risk and SPoF.
+   - GET /api/risk/attribution - Returns latest change-attribution driver and summary.
+   - POST /api/ingest/vulnerabilities/csv - Uploads and recalculates vulnerability scans.
+
+F. FRONTEND EXECUTIVE COCKPIT: frontend/app/dashboard/page.tsx
+   - Next.js 14 App Router UI with Tailwind CSS.
+   - Metric cards: Current EAL, 95% Value at Risk (VaR), Projected ROSI, Active Assets.
+   - "What Changed Today" change-attribution banner showing primary driver and root cause.
+   - Interactive What-If simulation slider for budget scenarios.
+
+================================================================================
+3. MATHEMATICAL MODELS & EXACT FORMULAS
+================================================================================
+
+1. OpenFAIR™ Loss Factorization:
+   LEF = TEF_effective × Vulnerability × (1 - Control_Effectiveness)
+   TEF_effective = TEF × GenAI_Amplification_Factor (1.0× to 2.5×)
+   PLM = (Cost_Direct + Cost_Indirect + Cost_Regulatory) × Asset_Criticality
+   EAL = LEF × PLM
+
+2. Box-Muller Transformation (Lognormal Volatility):
+   Z = sqrt(-2 * ln(U1)) * cos(2 * π * U2)
+   Multiplier = exp(sigma * Z - sigma^2 / 2), with sigma = 0.6
+
+3. Extreme Value Theory (EVT) Generalized Pareto Distribution (GPD):
+   For excess losses exceeding threshold u at tail probability p = 0.02:
+   Excess = EAL × (1 / (1 - U)^ξ), where ξ = 0.25 (fat-tail parameter)
+
+4. Return on Security Investment (ROSI):
+   ROSI = (ΔEAL - Control_Cost) / Control_Cost
+   Spread = ΔEAL × (1 - Confidence_Percentage)
+   Confidence Interval = [ΔEAL - Spread, ΔEAL + Spread]
+
+5. Supply Chain Accumulation Surcharge:
+   Combined_Exposure = Sum(Independent_EAL) + (Shared_Group_EAL × Correlation_Factor)
+
+================================================================================
+4. VERIFIED TEST CASES & WORKED EXAMPLES (backend/src/engine/fair.test.ts)
+================================================================================
+The test suite consists of 6 test suites and 14 tests, all passing with Vitest:
+
+- Test 1: FAIR baseline calculation matches EAL = LEF × PLM ($960,000 on test inputs).
+- Test 2: Asset business criticality linearly scales PLM and EAL (1.0 vs 0.5 criticality).
+- Test 3: AI-amplification factor linearly scales TEF and total EAL (8× factor test).
+- Test 4: Boundary conditions hold (100% control effectiveness strictly yields $0 EAL).
+- Test 5: Change attribution identifies vulnerability jump (0.40 -> 0.70) as primary driver.
+- Test 6: Change attribution flags control degradation (90% -> 20% MFA drop) with delta.
+- Test 7: Empty portfolio safely returns $0 VaR without division-by-zero errors.
+- Test 8: Monotonically increasing VaR across percentiles (VaR 90% <= VaR 95% <= VaR 99%).
+- Test 9: Fat-tail jump verification: worst-case loss significantly exceeds 95% VaR.
+- Test 10: PRNG seed guarantees 100% deterministic reproducibility across simulation runs.
+- Test 11: 150% ROSI Worked Example ($1.2M EAL, 25% mitigation = $300k drop, $120k cost -> 150% ROSI).
+- Test 12: trackRosiOutcome() calculates exact predicted vs observed variance ($30k / -10%).
+- Test 13: Vendor accumulation surcharge correctly penalizes shared AWS dependency group ($750k).
+- Test 14: Portfolio aggregation accurately sums multi-asset EALs.
+
+================================================================================
+5. SOFTWARE STACK & ARCHITECTURE
+================================================================================
+Component              Technology                 Purpose
+--------------------------------------------------------------------------------
+Backend Engine         Node.js / TypeScript       Core OpenFAIR & Monte Carlo math
+Test Framework         Vitest                     Automated unit & regression testing
+Web Framework          Express.js                 REST API endpoints for data & risk
+Frontend Dashboard     Next.js 14 (React)         Executive Cockpit & What-If sandbox
+Styling & Visuals      Tailwind CSS / Recharts    Modern dark/light responsive styling
+Database Engine        PostgreSQL (schema.sql)    Multi-tenant ACID persistence
+Prototyping Store      In-Memory Store (store.ts) Fast local execution & CI testing
+
+================================================================================
+6. DATABASE SCHEMA (backend/src/db/schema.sql)
+================================================================================
+The PostgreSQL database defines 8 multi-tenant relational tables:
+1. organizations: Tenancy isolation, plan limits, industry sector, base currency.
+2. users: Role-based access control ('admin', 'ciso', 'analyst', 'auditor').
+3. assets: Enterprise inventory (criticality, TEF, vulnerability, controls, direct/indirect costs).
+4. telemetry: Ingested events from SIEM, EDR, and vulnerability scanners.
+5. risk_snapshots: Historical portfolio snapshots (EAL, VaR 95%, VaR 99%, simulations).
+6. vendors: Third-party vendor directory with shared_dependency_group (SPoF detection).
+7. controls: Security controls catalog (cost, type, target asset, expected mitigation %).
+8. change_attributions: Audit log of root-cause drivers explaining every risk movement.
+
+================================================================================
+7. ROADMAP & FUTURE ENHANCEMENTS (PHASES 2–5)
+================================================================================
+What is currently built is Phase 1 (MVP Foundation). The upcoming phases are:
+
+Phase 2 (Weeks 5–8): Continuous Quantification & Bayesian Updating
+- Live Kafka stream connectors for real-time SIEM alerts and Nessus scans.
+- Closed-Loop Bayesian Updating: Uses a Beta-Binomial conjugate model
+  (Beta(α, β)) to update prior vulnerability distributions as live telemetry arrives.
+- Automated drift alerts triggered when continuous VaR crosses board tolerance limits.
+
+Phase 3 (Weeks 9–12): Third-Party Supply Chain Graph
+- Automated vendor discovery using WHOIS/DNS/SSL footprinting.
+- Multi-tier dependency graph mapping systemic Single Points of Failure (SPoF).
+
+Phase 4 (Weeks 13–16): GenAI Exploit Simulator & SHAP Explainability
+- Dynamic Bayesian network modeling offensive LLM exploit generation speed.
+- SHAP / LIME-style feature attribution on ML risk sub-components.
+
+Phase 5 (Weeks 17–20): Combinatorial 0/1 Knapsack Optimizer
+- Dynamic programming solver selecting the exact mathematical control portfolio
+  that maximizes ROSI under fixed budget caps (e.g. ₹50 Lakh or ₹1 Crore).
+
+================================================================================
+8. PRESENTATION DECK STRUCTURE (SIH2026_Exodus_Inovatrix (1).pptx)
+================================================================================
+Slide 1 — Title Page:
+  - Official SIH 2026 template, PS ID 26105, Team Inovatrix (ID 131962).
+
+Slide 2 — Idea & Architecture Overview:
+  - Problem: Stale RAG heatmaps (85% fail).
+  - Our Idea: AegisRisk continuous mathematical risk quantification.
+  - Center Visual: 3D Workstation model with 6 branching capability cards.
+  - Proposed Solution (Left) & Innovation / Uniqueness (Right).
+
+Slide 3 — Technical Approach:
+  - Left: Hardware & Software stack (8 clean bullet points in Segoe UI).
+  - Top Right: High-Visibility 5-Stage System Flowchart (Ingestion -> FAIR -> Monte Carlo -> Knapsack -> Output).
+  - Bottom Left: Mathematical Risk Decomposition Model (Clean Tabs & Topics layout).
+  - Bottom Right: 36-Hour Hackathon Build Roadmap (5 color-coded phases).
+
+Slide 4 — Feasibility and Viability:
+  - Top Left (Feasibility): Synthetic/CSV ingestion, FAIR math, commodity CPU scaling.
+  - Top Right (Commercial Feasibility): 85% market validation, RBI/SEBI/SEC mandates, ROSI defense.
+  - Bottom Left (Challenges): Telemetry volume, GenAI threats, messy CMDBs, control drift.
+  - Bottom Right (Strategy): Closed-loop recalibration diagram (New Evidence -> Model -> Recalibrated Loss).
+
+Slide 5 — Impact and Benefits:
+  - Direct Impact on Target Users: CISOs, CFOs/Boardrooms, Compliance, SOC Teams.
+  - Economic & Strategic Benefits: 150% ROSI validation, Diminishing returns solver.
+  - Bottom Left: Strategic Impact & National Cyber Sovereignty (Atmanirbhar Bharat).
+  - Bottom Right: Enterprise Cyber Loss Exposure vs. AegisRisk Optimization Benchmark Chart (↓ 85.7% tail reduction).
+
+Slide 6 — Research and References:
+  - Standardized 2x3 ZyraNav grid with dashed red template dividers.
+  - 6 Academic Citations with hyperlinked DOIs:
+    1. Gap Identification: Springer DOI (2025)
+    2. Framework: FAIR Institute OpenFAIR™ Spec v3.0 (2025)
+    3. Stochastic EVT Modeling: Kamdem & Kapsa (2025)
+    4. Cloud Quantification: ScienceDirect FABRICS Framework (2026)
+    5. GenAI Threat Modeling: arXiv:2601.17225 (2026)
+    6. Capital Allocation & ROSI: Cambridge BAJ (2025)
+
+================================================================================
+9. DEFENSIBILITY FAQ FOR JUDGES
+================================================================================
+Q1: "Is this just a qualitative heatmap with numbers slapped on?"
+A1: No. It is an implementation of the OpenFAIR ISO/IEC standard decomposing
+    exposure into Threat Event Frequency (Poisson/Beta) and Loss Magnitude (lognormal),
+    simulated across 10,000 Monte Carlo iterations with an EVT Generalized Pareto tail.
+
+Q2: "Where does your telemetry data come from?"
+A2: In our working MVP, we ingest CSV/REST feeds with CVSS 3.1 and asset metadata
+    via IngestionService. In Phase 2, this connects to Kafka streaming topics.
+
+Q3: "How do you account for catastrophic tail events?"
+A3: Standard normal distributions fail to model black-swan cyber attacks. We use
+    Extreme Value Theory (EVT) with a Generalized Pareto Distribution (shape ξ=0.25)
+    to inject realistic 2% extreme tail risk into our 95% and 99% VaR.
+
+Q4: "What is currently built vs what is roadmap?"
+A4: Built & passing tests: OpenFAIR engine, 10k Monte Carlo VaR, EVT GPD jump, ROSI
+    solver, SPoF accumulation risk, deterministic change attribution, Next.js UI.
+    Roadmap (Phases 2-5): Kafka cluster, live Bayesian updating, 0/1 Knapsack DP.
+
+================================================================================
+END OF DOSSIER — AEGISRISK AI
+================================================================================

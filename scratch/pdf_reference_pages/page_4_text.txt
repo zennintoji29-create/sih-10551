@@ -1,0 +1,57 @@
+FEASIBILITY AND VIABILITY
+4
+Commercial feasibility 
+•
+Market Validation: Growing interest in LEO-based 
+navigation shows demand for resilient PNT solutions.
+•
+Technical Readiness: ~85% feasible using simulated 
+LEO signals compared with publicly available datasets.
+•
+Timeline: 5 days prototype using stimulated LEO signals 
+and comparison with real LEO Signal data.
+•
+Success Likelihood: High (~90%) if simulation accurately 
+models LEO SoO and AI reliably selects signals;
+Feasibility
+•
+Lab based simulated LEO SoO signals, avoiding early 
+hardware dependency.
+•
+Converts GNSS PNT into LEO SoO signals for testing.
+•
+Validation with official datasets Ensures accurate  
+simulation by comparing with real GNSS data.
+•
+Safe testing environment: No RF transmission in air , all 
+tests done internally.
+•
+Algorithm flexibility: Controlled simulation allows the AI 
+algorithm to be trained for any condition before real-time 
+deployment.
+Strategy:
+•
+Adaptive frequency estimation and Doppler compensation 
+using Kalman filters.
+•
+AI-based pattern recognition trained on open-source LEO 
+RF datasets to decode generic parameters.
+•
+Edge-optimized AI models on Raspberry Pi, dynamic task 
+scheduling, and energy-efficient algorithms.
+•
+Fuse GNSS, simulated LEO SoO, and INS data; implement 
+anomaly detection to reject compromised signals.
+Challenges
+•
+Fast- Moving LEO satellites cause frequent Doppler 
+changes.
+•
+Commercial LEO signals vary in modulation and 
+timing.
+•
+Real-time cognitive processing consumes high power.
+•
+GNSS and SoO signals can be tampered with in 
+contested areas.
+Helix House

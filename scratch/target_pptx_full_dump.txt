@@ -1,0 +1,368 @@
+
+==================== SLIDE 1 ====================
+--- Shape 1: Name='Rectangle 24', Id=36, Type=AUTO_SHAPE (1) ---
+    Left=1.67, Top=0.00, Width=10.00, Height=7.50
+--- Shape 2: Name='Freeform: Shape 26', Id=37, Type=FREEFORM (5) ---
+    Left=6.19, Top=0.93, Width=5.07, Height=5.64
+--- Shape 3: Name='Picture 4', Id=5, Type=PICTURE (13) ---
+    Left=7.50, Top=1.88, Width=3.50, Height=3.75
+--- Shape 4: Name='Subtitle 3', Id=4, Type=PLACEHOLDER (14) ---
+    Left=1.36, Top=0.71, Width=9.33, Height=1.92
+      P2 [lvl=0]: TITLE PAGE
+         runs=[('TITLE PAGE', True)]
+--- Shape 5: Name='Title 7', Id=8, Type=PLACEHOLDER (14) ---
+    Left=0.36, Top=-0.58, Width=11.33, Height=2.27
+      P1 [lvl=0]: SMART INDIA HACKATHON 2026
+         runs=[('SMART INDIA HACKATHON 2026', True)]
+--- Shape 6: Name='TextBox 9', Id=10, Type=TEXT_BOX (17) ---
+    Left=0.36, Top=1.95, Width=7.60, Height=4.15
+      P1 [lvl=0]: Problem Statement ID – 26105
+         runs=[('Problem Statement ID – ', True), ('26105', False)]
+      P2 [lvl=0]: Problem Statement Title – AI-Powered Continuous Cyber Risk Quantification & Investment Optimization
+         runs=[('Problem Statement Title – ', True), ('AI-Powered Continuous', False), (' ', False), ('Cyber Risk Quantification & Investment Optimization', False)]
+      P3 [lvl=0]: Theme – Blockchain & Cybersecurity
+         runs=[('Theme – ', True), ('Blockchain & Cybersecurity', None)]
+      P4 [lvl=0]: PS Category – Software
+         runs=[('PS Category – ', True), ('Software', False)]
+      P5 [lvl=0]: Team ID – 131962
+         runs=[('Team ID – ', True), ('131962', None)]
+      P6 [lvl=0]: Team Name – Inovatrix
+         runs=[('Team Name – ', True), ('Inovatrix', False)]
+--- Shape 7: Name='Picture 1', Id=2, Type=PICTURE (13) ---
+    Left=10.70, Top=0.00, Width=2.46, Height=1.16
+
+==================== SLIDE 2 ====================
+--- Shape 1: Name='Rectangle 8', Id=9, Type=AUTO_SHAPE (1) ---
+    Left=0.00, Top=6.95, Width=13.33, Height=0.55
+--- Shape 2: Name='Title 1', Id=15361, Type=PLACEHOLDER (14) ---
+    Left=1.73, Top=0.02, Width=7.90, Height=1.10
+      P1 [lvl=0]: AegisRisk: AI-Powered Continuous Cyber Risk Quantification & Investment Optimization Engine
+         runs=[('AegisRisk', True), (': AI-Powered Continuous Cyber Risk Quantification & Investment Optimization Engine', True)]
+--- Shape 3: Name='Slide Number Placeholder 5', Id=6, Type=PLACEHOLDER (14) ---
+    Left=9.56, Top=6.95, Width=3.11, Height=0.40
+      P1 [lvl=0]: 2
+         runs=[]
+--- Shape 4: Name='Footer Placeholder 6', Id=7, Type=PLACEHOLDER (14) ---
+    Left=5.08, Top=6.95, Width=3.50, Height=0.40
+      P1 [lvl=0]: @SIH Idea submission- Template
+         runs=[('@SIH Idea submission- Template', None)]
+--- Shape 5: Name='Oval 9', Id=10, Type=AUTO_SHAPE (1) ---
+    Left=0.18, Top=0.14, Width=1.37, Height=0.88
+      P1 [lvl=0]: Inovatrix
+         runs=[('Inovatrix', True)]
+--- Shape 6: Name='Picture 10', Id=11, Type=PICTURE (13) ---
+    Left=10.70, Top=0.00, Width=2.46, Height=1.16
+--- Shape 7: Name='Divider', Id=15362, Type=LINE (9) ---
+    Left=0.40, Top=1.16, Width=12.53, Height=0.00
+--- Shape 8: Name='TextBox 15362', Id=15363, Type=TEXT_BOX (17) ---
+    Left=0.31, Top=1.23, Width=6.05, Height=1.92
+      P1 [lvl=0]: Problem:
+         runs=[('Problem', True), (':', True)]
+      P2 [lvl=0]: Over 85% of organizations measure cyber risk through stale, qualitative Red/Amber/Green heatmaps that are up to 90 days out of date. This leaves CISOs unable to prove ROI or justify multi-crore security investments, while regulators (RBI, SEBI, SEC, DORA) increasingly mandate continuous, mathematical risk quantification in defensible financial terms ($ / ₹).
+         runs=[('Over\xa0', None), ('85% of organizations', True), ('\xa0measure cyber risk through\xa0', None), ('stale, qualitative Red/Amber/Green heatmaps', True), ('\xa0that are up to 90 days out of date. This leaves CISOs unable to prove\xa0', None), ('ROI or justify multi-crore security investments', True), (', while regulators (', None), ('RBI, SEBI, SEC, DORA', True), (') increasingly mandate\xa0', None), ('continuous, mathematical risk quantification in defensible financial terms ($ / ₹)', True), ('.', None)]
+--- Shape 9: Name='Divider', Id=15364, Type=LINE (9) ---
+    Left=6.44, Top=1.18, Width=0.00, Height=1.87
+--- Shape 10: Name='TextBox 15364', Id=15365, Type=TEXT_BOX (17) ---
+    Left=7.00, Top=1.18, Width=6.03, Height=2.20
+      P1 [lvl=0]: Our Idea:
+         runs=[('Our Idea:', True)]
+      P2 [lvl=0]: AegisRisk is a continuous, cloud-ready analytics engine that converts enterprise security telemetry into real-time monetary risk models (₹ / $) using OpenFAIR + 10,000-trial Monte Carlo (EVT fat-tail) to output EAL & VaR, with closed-loop validation that recalibrates control efficacy over time.
+         runs=[('AegisRisk', True), (' is a continuous, cloud-ready analytics engine that converts enterprise security telemetry into\xa0', None), ('real-time monetary risk models (₹ / $)', True), ('\xa0using\xa0', None), ('OpenFAIR', True), (' + 10,000-trial Monte Carlo (EVT fat-tail)', True), ('\xa0to output\xa0', None), ('EAL & ', True), ('VaR', True), (', with closed-loop validation that recalibrates control efficacy over time.', None)]
+--- Shape 11: Name='Divider', Id=15366, Type=LINE (9) ---
+    Left=0.37, Top=3.05, Width=12.53, Height=0.00
+--- Shape 12: Name='TextBox 15366', Id=15367, Type=TEXT_BOX (17) ---
+    Left=0.31, Top=3.02, Width=4.50, Height=3.93
+      P1 [lvl=0]: Proposed Solution:
+         runs=[('Proposed Solution:', True)]
+      P2 [lvl=0]: Ingests six pillars of telemetry — SIEM/EDR, asset/CMDB context, vulnerabilities (CVSS/EPSS), threat intel (MITRE ATT&CK, CISA KEV), control posture, and financial loss benchmarks — via a Kafka/FastAPI normalization layer.
+         runs=[('Ingests ', False), ('six pillars of telemetry', True), (' — SIEM/EDR, asset/', False), ('CMDB', True), (' context, ', False), ('vulnerabilities', True), (' (CVSS/EPSS), threat intel (', False), ('MITRE ATT&CK, CISA KEV', True), ('), control posture, and financial loss benchmarks — via a ', False), ('Kafka/', True), ('FastAPI', True), (' normalization layer.', False)]
+      P3 [lvl=0]: A FAIR + Monte Carlo engine decomposes risk into Loss Event Frequency × Probable Loss Magnitude to output Expected Annual Loss (EAL) and Value at Risk (VaR).
+         runs=[('A ', False), ('FAIR + Monte Carlo engine', True), (' decomposes risk into ', False), ('Loss Event Frequency × Probable Loss Magnitude', False), (' to output ', False), ('Expected Annual Loss (EAL)', True), (' and ', False), ('Value at Risk (', True), ('VaR', True), (').', True)]
+      P4 [lvl=0]: A knapsack-style budget solver recommends the mathematically optimal mix of security controls for any given budget.
+         runs=[('A ', False), ('knapsack-style budget solver', True), (' recommends the ', False), ('mathematically optimal', True), (' mix of security controls for any given budget.', False)]
+      P5 [lvl=0]: A closed-loop validation layer continuously backtests predictions against real incidents to auto-recalibrate model accuracy over time.
+         runs=[('A\xa0', None), ('closed-loop validation layer', True), ('\xa0continuously ', None), ('backtests', True), (' predictions against real incidents to ', None), ('auto-recalibrate', True), (' model accuracy over time.', None)]
+--- Shape 13: Name='TextBox 15368', Id=15369, Type=TEXT_BOX (17) ---
+    Left=8.33, Top=3.02, Width=4.53, Height=3.10
+      P1 [lvl=0]: Innovation / Uniqueness:
+         runs=[('Innovation / Uniqueness', True), (':', True)]
+      P2 [lvl=0]: Continuous Event-Driven Risk Quantification: Shifts organizations from stale, periodic heatmaps to real-time, probabilistic financial risk curves updated on every telemetry event.
+         runs=[('Continuous Event-Driven Risk Quantification:', True), ('\xa0Shifts organizations from stale, ', None), ('periodic heatmaps ', True), ('to real-time', None), (', probabilistic financial risk curves ', True), ('updated on every telemetry event.', None)]
+      P3 [lvl=0]: GenAI Threat Amplifier Modeling: Dynamically scales attack frequency and exploitability as adversaries leverage AI-assisted tooling — a risk factor no existing platform quantifies.
+         runs=[('GenAI Threat Amplifier Modeling:', True), ('\xa0Dynamically scales attack frequency and exploitability as adversaries leverage AI-assisted tooling — a risk factor no existing platform quantifies.', None)]
+      P4 [lvl=0]: Dynamic Control Friction Matrix: Instantly recalibrates net risk exposure when telemetry drifts (e.g. EDR agent going offline).
+         runs=[('Dynamic Control Friction Matrix:', True), ('\xa0Instantly recalibrates net ', None), ('risk exposure ', True), ('when telemetry drifts (e.g. EDR agent going offline).', None)]
+      P5 [lvl=0]: Closed-Loop Self-Healing Architecture: Backtests every prediction against real-world incidents and auto-tunes model parameters: Observe → Quantify → Optimize → Validate
+         runs=[('Closed-Loop Self-Healing Architecture:', True), ('\xa0', None), ('Backtests', True), (' every prediction against real-world incidents and auto-tunes model parameters:\xa0', None), ('Observe → Quantify → Optimize → Validate', True)]
+--- Shape 14: Name='Caption Fig 1', Id=20002, Type=TEXT_BOX (17) ---
+    Left=5.82, Top=6.10, Width=1.53, Height=0.25
+      P1 [lvl=0]: Fig 1
+         runs=[('Fig 1', False)]
+      P2 [lvl=0]: AegisRisk platform architecture
+         runs=[('AegisRisk', True), (' platform architecture', True)]
+--- Shape 15: Name='Picture 20258', Id=20259, Type=PICTURE (13) ---
+    Left=4.88, Top=3.17, Width=3.38, Height=3.00
+
+==================== SLIDE 3 ====================
+--- Shape 1: Name='Rectangle 9', Id=10, Type=AUTO_SHAPE (1) ---
+    Left=0.00, Top=6.95, Width=13.33, Height=0.55
+--- Shape 2: Name='Title 1', Id=17409, Type=PLACEHOLDER (14) ---
+    Left=1.82, Top=-0.08, Width=7.90, Height=1.10
+      P1 [lvl=0]: TECHNICAL APPROACH
+         runs=[('TECHNICAL APPROACH', True)]
+--- Shape 3: Name='Slide Number Placeholder 5', Id=6, Type=PLACEHOLDER (14) ---
+    Left=9.56, Top=6.95, Width=3.11, Height=0.40
+      P1 [lvl=0]: 3
+         runs=[]
+--- Shape 4: Name='Footer Placeholder 6', Id=7, Type=PLACEHOLDER (14) ---
+    Left=5.08, Top=6.95, Width=3.50, Height=0.40
+      P1 [lvl=0]: @SIH Idea submission- Template
+         runs=[('@SIH Idea submission- Template', None)]
+--- Shape 5: Name='Oval 10', Id=11, Type=AUTO_SHAPE (1) ---
+    Left=0.29, Top=0.00, Width=1.37, Height=0.88
+      P1 [lvl=0]: Inovatrix
+         runs=[('Inovatrix', True)]
+--- Shape 6: Name='Picture 11', Id=12, Type=PICTURE (13) ---
+    Left=10.69, Top=0.02, Width=2.46, Height=1.16
+--- Shape 7: Name='Divider', Id=17410, Type=LINE (9) ---
+    Left=0.37, Top=1.18, Width=12.53, Height=0.00
+--- Shape 8: Name='TextBox 17410', Id=17411, Type=TEXT_BOX (17) ---
+    Left=0.26, Top=1.16, Width=4.35, Height=5.50
+      P1 [lvl=0]: SOFTWARE:
+         runs=[('SOFTWARE:', True)]
+      P2 [lvl=0]: Telemetry Ingestion Layer (FastAPI & Apache Kafka): Asynchronous streaming pipeline ingesting live SIEM alerts, Nessus/Tenable scans, and CMDB context.
+         runs=[('Telemetry Ingestion Layer (', True), ('FastAPI', True), (' & Apache Kafka):', True), ('\xa0Asynchronous streaming pipeline ingesting live SIEM alerts, Nessus/Tenable scans, and CMDB context.', None)]
+      P3 [lvl=0]: Quantitative Risk Engine (OpenFAIR™ Framework): Standardized analytical engine decomposing exposure into Threat Frequency ($LEF$) and Loss Magnitude ($PLM$).
+         runs=[('Quantitative Risk Engine (', True), ('OpenFAIR', True), ('™ Framework):', True), ('\xa0Standardized analytical engine decomposing exposure into Threat Frequency ($LEF$) and Loss Magnitude ($PLM$).', None)]
+      P4 [lvl=0]: Stochastic Simulation Core (NumPy / SciPy Monte Carlo): Runs 10,000 loss trials per asset with Box-Muller sampling and Generalized Pareto fat-tail distribution.
+         runs=[('Stochastic Simulation Core (NumPy / SciPy Monte Carlo):', True), ('\xa0Runs 10,000 loss trials per asset with Box-Muller sampling and Generalized Pareto fat-tail distribution.', None)]
+      P5 [lvl=0]: Investment Optimizer (0/1 Knapsack DP Solver): Algorithmically selects the optimal security control portfolio to maximize ROSI under fixed budget caps (e.g. ₹1 Cr).
+         runs=[('Investment Optimizer (0/1 Knapsack DP Solver):', True), ('\xa0Algorithmically selects the optimal security control portfolio to maximize ROSI under fixed budget caps (e.g. ₹1 Cr).', None)]
+      P6 [lvl=0]: Threat Intelligence Feed (CISA KEV & MITRE ATT&CK): Continuous API enrichment tracking active in-the-wild zero-day vulnerabilities and adversary TTP mapping.
+         runs=[('Threat Intelligence Feed (CISA KEV & MITRE ATT&CK):', True), ('\xa0Continuous API enrichment tracking active in-the-wild zero-day vulnerabilities and adversary TTP mapping.', None)]
+      P7 [lvl=0]: Time-Series & Relational DB (TimescaleDB + PostgreSQL): High-throughput storage for continuous historical loss curves, audit logs, and vendor dependency graphs.
+         runs=[('Time-Series & Relational DB (', True), ('TimescaleDB', True), (' + PostgreSQL):', True), ('\xa0High-throughput storage for continuous historical loss curves, audit logs, and vendor dependency graphs.', None)]
+      P8 [lvl=0]: Executive Presentation UI (Next.js 14, Tailwind, Recharts): Real-time CISO dashboard rendering EAL/VaR distributions, What-If simulator, and change attribution.
+         runs=[('Executive Presentation UI (Next.js 14, Tailwind, Recharts):', True), ('\xa0Real-time CISO dashboard rendering EAL/', None), ('VaR', None), (' distributions, What-If simulator, and change attribution.', None)]
+--- Shape 9: Name='Divider', Id=17412, Type=LINE (9) ---
+    Left=4.55, Top=1.31, Width=0.00, Height=5.45
+--- Shape 10: Name='Divider', Id=17414, Type=LINE (9) ---
+    Left=4.85, Top=4.20, Width=8.08, Height=0.00
+--- Shape 11: Name='TextBox 17414', Id=17415, Type=TEXT_BOX (17) ---
+    Left=5.00, Top=4.27, Width=4.20, Height=0.50
+      P1 [lvl=0]: Mathematical Risk Decomposition
+         runs=[('Mathematical Risk Decomposition', True)]
+--- Shape 12: Name='Divider', Id=17416, Type=LINE (9) ---
+    Left=9.30, Top=4.25, Width=0.00, Height=2.60
+--- Shape 13: Name='TextBox 17416', Id=17417, Type=TEXT_BOX (17) ---
+    Left=9.45, Top=4.27, Width=3.45, Height=0.50
+      P1 [lvl=0]: 36-Hour Build Roadmap
+         runs=[('36-Hour Build Roadmap', True)]
+--- Shape 14: Name='Caption Fig 4', Id=20006, Type=TEXT_BOX (17) ---
+    Left=10.41, Top=6.57, Width=1.53, Height=0.25
+      P1 [lvl=0]: Fig 4
+         runs=[('Fig 4', False)]
+--- Shape 15: Name='Rectangle 1', Id=2, Type=AUTO_SHAPE (1) ---
+    Left=4.78, Top=6.69, Width=0.59, Height=0.21
+      P1 [lvl=0]: fig3
+         runs=[('fig3', None)]
+--- Shape 16: Name='Rectangle 3', Id=4, Type=AUTO_SHAPE (1) ---
+    Left=11.94, Top=6.57, Width=0.85, Height=0.25
+      P1 [lvl=0]: fig2
+         runs=[('fig2', None)]
+--- Shape 17: Name='Group 39', Id=40, Type=GROUP (6) ---
+    Left=11.20, Top=3.59, Width=1.98, Height=0.23
+
+==================== SLIDE 4 ====================
+--- Shape 1: Name='Rectangle 9', Id=10, Type=AUTO_SHAPE (1) ---
+    Left=0.00, Top=6.95, Width=13.33, Height=0.55
+--- Shape 2: Name='Title 1', Id=17409, Type=PLACEHOLDER (14) ---
+    Left=1.75, Top=0.05, Width=7.90, Height=1.10
+      P1 [lvl=0]: FEASIBILITY AND VIABILITY
+         runs=[('FEASIBILITY AND VIABILITY', True)]
+--- Shape 3: Name='Slide Number Placeholder 5', Id=6, Type=PLACEHOLDER (14) ---
+    Left=9.56, Top=6.95, Width=3.11, Height=0.40
+      P1 [lvl=0]: 4
+         runs=[]
+--- Shape 4: Name='Footer Placeholder 6', Id=7, Type=PLACEHOLDER (14) ---
+    Left=5.08, Top=6.95, Width=3.50, Height=0.40
+      P1 [lvl=0]: @SIH Idea submission- Template
+         runs=[('@SIH Idea submission- Template', False)]
+--- Shape 5: Name='Oval 11', Id=12, Type=AUTO_SHAPE (1) ---
+    Left=0.36, Top=0.28, Width=1.37, Height=0.88
+      P1 [lvl=0]: Inovatrix
+         runs=[('Inovatrix', True)]
+--- Shape 6: Name='Picture 10', Id=11, Type=PICTURE (13) ---
+    Left=10.70, Top=0.00, Width=2.46, Height=1.16
+--- Shape 7: Name='Divider', Id=17410, Type=LINE (9) ---
+    Left=0.40, Top=1.27, Width=12.53, Height=0.00
+--- Shape 8: Name='TextBox 17410', Id=17411, Type=TEXT_BOX (17) ---
+    Left=0.40, Top=1.35, Width=6.23, Height=2.73
+      P1 [lvl=0]: Feasibility — Legacy vs. Continuous
+         runs=[('Feasibility — Legacy vs. Continuous', True)]
+      P2 [lvl=0]: Traditional risk assessments are periodic snapshots — a point-in-time audit refreshed once or twice a year, scored through subjective heatmaps (red/amber/green) that go stale the moment a new CVE drops or an attacker's toolkit changes. Exodus replaces this with continuous quantification: live telemetry from SIEM, CrowdStrike and Nessus streams into the Monte Carlo engine in near real time, so the risk figure on the dashboard reflects today's exposure, not last quarter's audit. This is technically feasible because the heavy lifting — Monte Carlo sampling, Bayesian updating — is embarrassingly parallel and runs well within commodity compute budgets, while the FAIR framework gives a mathematically defensible structure to translate raw telemetry into dollar-denominated loss exposure rather than an arbitrary color code.
+         runs=[('Traditional risk assessments are periodic snapshots — a point-in-time audit refreshed once or twice a year, scored through subjective ', False), ('heatmaps', False), (" (red/amber/green) that go stale the moment a new CVE drops or an attacker's toolkit changes. Exodus replaces this with continuous quantification: live telemetry from SIEM, ", False), ('CrowdStrike', False), (" and Nessus streams into the Monte Carlo engine in near real time, so the risk figure on the dashboard reflects today's exposure, not last quarter's audit. This is technically feasible because the heavy lifting — Monte Carlo sampling, Bayesian updating — is embarrassingly parallel and runs well within commodity compute budgets, while the FAIR framework gives a mathematically defensible structure to translate raw telemetry into dollar-denominated loss exposure rather than an arbitrary color code.", False)]
+--- Shape 9: Name='Divider', Id=17412, Type=LINE (9) ---
+    Left=6.68, Top=1.40, Width=0.00, Height=5.45
+--- Shape 10: Name='TextBox 17412', Id=17413, Type=TEXT_BOX (17) ---
+    Left=6.90, Top=1.35, Width=6.03, Height=2.75
+      P1 [lvl=0]: Commercial Feasibility
+         runs=[('Commercial Feasibility', True)]
+      P2 [lvl=0]: Market Validation: 85% of organizations still rely on annual assessments — a large, underserved market for continuous quantification.
+         runs=[('Market Validation:', True), (' 85% of organizations still rely on annual assessments — a large, underserved market for continuous quantification.', False)]
+      P3 [lvl=0]: Regulatory Tailwind: SEC, DORA, NIS2 and HIPAA increasingly mandate defensible, mathematical risk quantification, not subjective heatmaps.
+         runs=[('Regulatory Tailwind:', True), (' SEC, DORA, NIS2 and HIPAA increasingly mandate defensible, mathematical risk quantification, not subjective heatmaps.', False)]
+      P4 [lvl=0]: Technical Readiness: ML ensembles predict attack frequency with 85–90% accuracy against historical datasets.
+         runs=[('Technical Readiness:', True), (' ML ensembles predict attack frequency with 85–90% accuracy against historical datasets.', False)]
+      P5 [lvl=0]: The ROI Blind Spot: CISOs currently lack models to prove multi-million-dollar budget efficacy — Exodus closes this gap directly.
+         runs=[('The ROI Blind Spot:', True), (' CISOs currently lack models to prove multi-million-dollar budget efficacy — Exodus closes this gap directly.', False)]
+--- Shape 11: Name='Divider', Id=17414, Type=LINE (9) ---
+    Left=0.40, Top=4.15, Width=12.53, Height=0.00
+--- Shape 12: Name='TextBox 17414', Id=17415, Type=TEXT_BOX (17) ---
+    Left=0.40, Top=4.22, Width=6.05, Height=2.65
+      P1 [lvl=0]: Challenges
+         runs=[('Challenges', True)]
+      P2 [lvl=0]: Monte Carlo engine must sustain 10,000+ continuous iterations without lag at enterprise telemetry volume.
+         runs=[('Monte Carlo engine must sustain 10,000+ continuous iterations without lag at enterprise telemetry volume.', False)]
+      P3 [lvl=0]: Requires clean, cross-referenced data across six heterogeneous pillars (SIEM, CMDB, Nessus, threat intel, controls, loss benchmarks).
+         runs=[('Requires clean, cross-referenced data across six heterogeneous pillars (SIEM, CMDB, Nessus, threat intel, controls, loss benchmarks).', False)]
+      P4 [lvl=0]: GenAI is dynamically lowering the cost of exploitation — the model must keep recalibrating attack-probability priors.
+         runs=[('GenAI is dynamically lowering the cost of exploitation — the model must keep recalibrating attack-probability priors.', False)]
+      P5 [lvl=0]: Encoding regulatory constraints (SEC/DORA/NIS2/HIPAA) into the optimization layer without hardcoding brittle rules.
+         runs=[('Encoding regulatory constraints (SEC/DORA/NIS2/HIPAA) into the optimization layer without hardcoding brittle rules.', False)]
+--- Shape 13: Name='TextBox 17415', Id=17416, Type=TEXT_BOX (17) ---
+    Left=6.92, Top=4.20, Width=6.03, Height=0.50
+      P1 [lvl=0]: Strategy — Closed-Loop Recalibration
+         runs=[('Strategy — Closed-Loop Recalibration', True)]
+--- Shape 14: Name='Rectangle 2', Id=3, Type=AUTO_SHAPE (1) ---
+    Left=7.01, Top=4.48, Width=5.36, Height=0.34
+--- Shape 15: Name='Picture 3', Id=4, Type=PICTURE (13) ---
+    Left=6.17, Top=4.37, Width=6.43, Height=2.85
+--- Shape 16: Name='Rectangle 4', Id=5, Type=AUTO_SHAPE (1) ---
+    Left=12.37, Top=6.54, Width=0.79, Height=0.31
+      P1 [lvl=0]: fig4
+         runs=[('fig4', None)]
+
+==================== SLIDE 5 ====================
+--- Shape 1: Name='Rectangle 9', Id=10, Type=AUTO_SHAPE (1) ---
+    Left=0.00, Top=6.95, Width=13.33, Height=0.55
+--- Shape 2: Name='Title 1', Id=17409, Type=PLACEHOLDER (14) ---
+    Left=1.75, Top=0.05, Width=7.90, Height=1.10
+      P1 [lvl=0]: IMPACT AND BENEFITS
+         runs=[('IMPACT AND BENEFITS', True)]
+--- Shape 3: Name='Slide Number Placeholder 5', Id=6, Type=PLACEHOLDER (14) ---
+    Left=9.56, Top=6.95, Width=3.11, Height=0.40
+      P1 [lvl=0]: 5
+         runs=[]
+--- Shape 4: Name='Footer Placeholder 6', Id=7, Type=PLACEHOLDER (14) ---
+    Left=5.08, Top=6.95, Width=3.50, Height=0.40
+      P1 [lvl=0]: @SIH Idea submission- Template
+         runs=[('@SIH Idea submission- Template', False)]
+--- Shape 5: Name='Oval 11', Id=12, Type=AUTO_SHAPE (1) ---
+    Left=0.36, Top=0.28, Width=1.37, Height=0.88
+      P1 [lvl=0]: Inovatrix
+         runs=[('Inovatrix', True)]
+--- Shape 6: Name='Picture 10', Id=11, Type=PICTURE (13) ---
+    Left=10.70, Top=0.00, Width=2.46, Height=1.16
+--- Shape 7: Name='Divider', Id=17410, Type=LINE (9) ---
+    Left=0.40, Top=1.27, Width=12.53, Height=0.00
+--- Shape 8: Name='TextBox 17410', Id=17411, Type=TEXT_BOX (17) ---
+    Left=0.40, Top=1.35, Width=6.05, Height=2.75
+      P1 [lvl=0]: Direct Impact on Target Users
+         runs=[('Direct Impact on Target Users', True)]
+      P2 [lvl=0]: CISOs: Explainable, defensible dollar-denominated risk metrics (EAL/VaR) instead of subjective color-coded heatmaps.
+         runs=[('CISOs:', True), (' Explainable, defensible dollar-denominated risk metrics (EAL/VaR) instead of subjective color-coded heatmaps.', False)]
+      P3 [lvl=0]: CFOs / Boardrooms: Clear ROSI (Return on Security Investment) modeling for every proposed control.
+         runs=[('CFOs / Boardrooms:', True), (' Clear ROSI (Return on Security Investment) modeling for every proposed control.', False)]
+      P4 [lvl=0]: Compliance teams: Continuous evidence trail aligned to SEC, DORA, NIS2 and HIPAA quantification mandates.
+         runs=[('Compliance teams:', True), (' Continuous evidence trail aligned to SEC, DORA, NIS2 and HIPAA quantification mandates.', False)]
+      P5 [lvl=0]: SOC teams: Real-time visibility into how live telemetry (new CVEs, control drift) moves financial exposure.
+         runs=[('SOC teams:', True), (' Real-time visibility into how live telemetry (new CVEs, control drift) moves financial exposure.', False)]
+--- Shape 9: Name='Divider', Id=17412, Type=LINE (9) ---
+    Left=6.68, Top=1.40, Width=0.00, Height=5.45
+--- Shape 10: Name='Divider', Id=17413, Type=LINE (9) ---
+    Left=0.40, Top=4.15, Width=6.28, Height=0.00
+--- Shape 11: Name='TextBox 17413', Id=17414, Type=TEXT_BOX (17) ---
+    Left=0.40, Top=4.22, Width=6.05, Height=2.65
+      P1 [lvl=0]: Strategic Impact
+         runs=[('Strategic Impact', True)]
+      P2 [lvl=0]: Moves enterprise cybersecurity spending from subjective guesswork to defensible, mathematical financial models.
+         runs=[('Moves enterprise cybersecurity spending from subjective guesswork to ', False), ('defensible, mathematical financial models.', True)]
+      P3 [lvl=0]: During a live ransomware scenario, the engine tracked 95% VaR rising from $2.1M → $4.8M → $14.8M across the attack chain, triggering automated subnet isolation before the tail-loss event materialized.
+         runs=[('During a live ransomware scenario, the engine tracked 95% VaR rising from ', False), ('$2.1M → $4.8M → $14.8M', True), (' across the attack chain, triggering automated subnet isolation before the tail-loss event materialized.', False)]
+      P4 [lvl=0]: Gives regulators, insurers and boards a shared, quantitative language for cyber risk.
+         runs=[('Gives regulators, insurers and boards a shared, quantitative language for cyber risk.', False)]
+--- Shape 12: Name='TextBox 17414', Id=17415, Type=TEXT_BOX (17) ---
+    Left=6.90, Top=1.35, Width=6.03, Height=2.35
+      P1 [lvl=0]: Economic & Strategic Benefits
+         runs=[('Economic & Strategic Benefits', True)]
+      P2 [lvl=0]: Combinatorial budget solver found a $450K control portfolio (within a $500K budget) reducing EAL by $1.15M.
+         runs=[('Combinatorial budget solver found a ', False), ('$450K', True), (' control portfolio (within a $500K budget) reducing EAL by ', False), ('$1.15M.', True)]
+      P3 [lvl=0]: Example validation: a $120K IAM overhaul producing $300K of telemetry-proven EAL reduction — 150% ROSI.
+         runs=[('Example validation: a $120K IAM overhaul producing $300K of telemetry-proven EAL reduction — ', False), ('150% ROSI.', True)]
+      P4 [lvl=0]: Identifies the exact point of diminishing returns on security spend, preventing capital inefficiency.
+         runs=[('Identifies the exact ', False), ('point of diminishing returns', True), (' on security spend, preventing capital inefficiency.', False)]
+      P5 [lvl=0]: Replaces static annual re-assessments with a self-healing model that gets smarter every budget cycle.
+         runs=[('Replaces static annual re-assessments with a self-healing model that gets smarter every budget cycle.', False)]
+--- Shape 13: Name='Divider', Id=17416, Type=LINE (9) ---
+    Left=6.68, Top=4.17, Width=6.25, Height=0.00
+--- Shape 14: Name='TextBox 17416', Id=17417, Type=TEXT_BOX (17) ---
+    Left=6.90, Top=4.02, Width=6.03, Height=2.84
+      P2 [lvl=0]: Marginal Return on Security Spend
+         runs=[('Marginal Return on Security Spend', True)]
+      P3 [lvl=0]: Every additional dollar of security spend doesn't buy the same amount of risk reduction — the first controls close the biggest, cheapest gaps, and each control added after that chips away at a smaller slice of remaining exposure. Exodus's combinatorial solver plots this curve explicitly: it shows EAL reduction per dollar spent across every candidate control, so a CISO can see exactly where the curve flattens instead of guessing. That's how the $120K IAM overhaul was validated as a 150% ROSI move while later spend in the same portfolio would have returned far less — the model tells you not just what to buy, but when to stop buying.
+         runs=[("Every additional dollar of security spend doesn't buy the same amount of risk reduction — the first controls close the biggest, cheapest gaps, and each control added after that chips away at a smaller slice of remaining exposure. Exodus's combinatorial solver plots this curve explicitly: it shows EAL reduction per dollar spent across every candidate control, so a ", False), ('CISO', False), (" can see exactly where the curve flattens instead of guessing. That's how the $120K IAM overhaul was validated as a 150% ROSI move while later spend in the same portfolio would have returned far less — the model tells you not just what to buy, but when to stop buying.", False)]
+
+==================== SLIDE 6 ====================
+--- Shape 1: Name='Rectangle 9', Id=10, Type=AUTO_SHAPE (1) ---
+    Left=0.00, Top=6.95, Width=13.33, Height=0.55
+--- Shape 2: Name='Title 1', Id=17409, Type=PLACEHOLDER (14) ---
+    Left=1.75, Top=0.05, Width=7.90, Height=1.10
+      P1 [lvl=0]: RESEARCH AND REFERENCES
+         runs=[('RESEARCH AND REFERENCES', True)]
+--- Shape 3: Name='Slide Number Placeholder 5', Id=6, Type=PLACEHOLDER (14) ---
+    Left=9.56, Top=6.95, Width=3.11, Height=0.40
+      P1 [lvl=0]: 6
+         runs=[]
+--- Shape 4: Name='Footer Placeholder 6', Id=7, Type=PLACEHOLDER (14) ---
+    Left=5.08, Top=6.95, Width=3.50, Height=0.40
+      P1 [lvl=0]: @SIH Idea submission- Template
+         runs=[('@SIH Idea submission- Template', False)]
+--- Shape 5: Name='Oval 8', Id=9, Type=AUTO_SHAPE (1) ---
+    Left=0.36, Top=0.28, Width=1.37, Height=0.88
+      P1 [lvl=0]: Inovatrix
+         runs=[('Inovatrix', True)]
+--- Shape 6: Name='Picture 11', Id=12, Type=PICTURE (13) ---
+    Left=10.70, Top=0.00, Width=2.46, Height=1.16
+--- Shape 7: Name='Divider', Id=17410, Type=LINE (9) ---
+    Left=0.40, Top=1.27, Width=12.53, Height=0.00
+--- Shape 8: Name='TextBox 17415', Id=17416, Type=TEXT_BOX (17) ---
+    Left=0.53, Top=2.16, Width=11.07, Height=0.64
+      P1 [lvl=0]: Sadefo Kamdem & Kapsa, CyberRisk Prediction using Machine Learning and Extreme Value Theory (2025): https://doi.org/10.1007/s10796-025-10678-z
+         runs=[('Sadefo', None), (' ', None), ('Kamdem', None), (' & ', None), ('Kapsa', None), (', ', None), ('CyberRisk', None), (' Prediction using Machine Learning and Extreme Value Theory (2025): ', None), ('https://doi.org/10.1007/s10796-025-10678-z', None)]
+--- Shape 9: Name='TextBox 17416', Id=17417, Type=TEXT_BOX (17) ---
+    Left=6.90, Top=3.22, Width=6.03, Height=0.50
+--- Shape 10: Name='TextBox 17417', Id=17418, Type=TEXT_BOX (17) ---
+    Left=0.31, Top=5.08, Width=6.05, Height=0.50
+--- Shape 11: Name='TextBox 17418', Id=17419, Type=TEXT_BOX (17) ---
+    Left=6.90, Top=5.42, Width=6.03, Height=1.80
+--- Shape 12: Name='Rectangle 2', Id=3, Type=AUTO_SHAPE (1) ---
+    Left=0.47, Top=1.38, Width=11.46, Height=0.71
+      P1 [lvl=0]: FABRICS Framework: A Bayesian Approach to Financial Quantification of Cyber Risk (2026): https://www.sciencedirect.com/science/article/pii/S0167404826000763
+         runs=[('FABRICS Framework: A Bayesian Approach to Financial Quantification of Cyber Risk (2026): ', None), ('https://www.sciencedirect.com/science/article/pii/S0167404826000763', None)]
+--- Shape 13: Name='Rectangle 4', Id=5, Type=AUTO_SHAPE (1) ---
+    Left=0.53, Top=2.85, Width=11.39, Height=1.01
+      P1 [lvl=0]: FAIR Institute. Factor Analysis of Information Risk (FAIR) Standard v3.0, January 2025. https://www.fairinstitute.org/hubfs/Standards%20Artifacts/Factor%20Analysis%20of%20Information%20Risk%20(FAIR)%20Standard%20v3.0%20(January%202025).pdf
+         runs=[('FAIR Institute. Factor Analysis of Information Risk (FAIR) Standard v3.0, January 2025. ', None), ('https://www.fairinstitute.org/hubfs/Standards%20Artifacts/Factor%20Analysis%20of%20Information%20Risk%20(FAIR)%20Standard%20v3.0%20(January%202025).pdf', None), (' ', None)]
+--- Shape 14: Name='Rectangle 7', Id=8, Type=AUTO_SHAPE (1) ---
+    Left=0.47, Top=3.93, Width=11.07, Height=0.71
+      P1 [lvl=0]: Toward Risk Thresholds for AI-Enabled Cyber Threats: Enhancing Decision-Making Under Uncertainty with Bayesian Networks. arXiv:2601.17225. https://arxiv.org/pdf/2601.17225
+         runs=[('Toward Risk Thresholds for AI-Enabled Cyber Threats: Enhancing Decision-Making Under Uncertainty with Bayesian Networks. arXiv:2601.17225. ', None), ('https://arxiv.org/pdf/2601.17225', None)]
+--- Shape 15: Name='Rectangle 10', Id=11, Type=AUTO_SHAPE (1) ---
+    Left=0.47, Top=4.72, Width=11.11, Height=0.71
+      P1 [lvl=0]: Toward Quantitative Modeling of Cybersecurity Risks Due to AI Misuse. arXiv:2512.08864, 2025. https://arxiv.org/pdf/2512.08864
+         runs=[('Toward Quantitative Modeling of Cybersecurity Risks Due to AI Misuse. arXiv:2512.08864, 2025. ', None), ('https://arxiv.org/pdf/2512.08864', None)]
+--- Shape 16: Name='Rectangle 12', Id=13, Type=AUTO_SHAPE (1) ---
+    Left=0.39, Top=5.35, Width=11.35, Height=1.01
+      P1 [lvl=0]: Cyber-Insurance Pricing Models. British Actuarial Journal, Vol. 30, 2025. https://www.cambridge.org/core/journals/british-actuarial-journal/article/cyberinsurance-pricing-models/81A761007ADE929C4E81AFB9ADB054B0
+         runs=[('Cyber-Insurance Pricing Models. British Actuarial Journal, Vol. 30, 2025. ', None), ('https://www.cambridge.org/core/journals/british-actuarial-journal/article/cyberinsurance-pricing-models/81A761007ADE929C4E81AFB9ADB054B0', None)]

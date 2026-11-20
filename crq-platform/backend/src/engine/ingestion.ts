@@ -21,23 +21,73 @@ export class IngestionService {
    * Parse CSV content for Category A (Vulnerabilities)
    * Expected columns: assetId, cve, severity, cvss, exploitability, isPatched
    */
-  parseVulnerabilityCsv(orgId: string, csvText: string, mode: ConnectorMode = "manual"): Finding[] {
-    const lines = csvText.trim().split(/\r?\n/);
-    if (lines.length <= 1) return [];
-
-    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-    const assetIdx = headers.findIndex((h) => h.includes("asset"));
-    const cveIdx = headers.findIndex((h) => h.includes("cve"));
-    const sevIdx = headers.findIndex((h) => h.includes("sev"));
-    const cvssIdx = headers.findIndex((h) => h.includes("cvss"));
-    const expIdx = headers.findIndex((h) => h.includes("exploit") || h.includes("loss"));
-    const patchIdx = headers.findIndex((h) => h.includes("patch"));
+  parseVulnerabilityCsv(orgId: string, rawText: string, mode: ConnectorMode = "manual"): Finding[] {
+    const trimmed = rawText.trim();
+    if (!trimmed) return [];
 
     const assets = dbStore.getAssets(orgId);
     const findings: Finding[] = [];
 
+    // Support JSON array format
+    if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        const items = Array.isArray(parsed) ? parsed : [parsed];
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const rawAsset = item.asset || item.assetId || item.assetName || item.host || item.target || "ast-payment";
+          const cve = item.cve || item.cveId || item.id || `CVE-2026-${2000 + i}`;
+          const sev = (item.severity || item.sev || "High") as Finding["severity"];
+          const cvss = parseFloat(item.cvss || item.cvssScore || item.score) || 7.5;
+          const exploitability = parseFloat(item.exploitability || item.exploit) || 0.6;
+          const isPatched = Boolean(item.isPatched || item.patched || false);
+
+          const matchedAsset = assets.find((a) => a.id === rawAsset || a.name.toLowerCase().includes(String(rawAsset).toLowerCase())) || assets[0];
+          const assetId = matchedAsset ? matchedAsset.id : "ast-payment";
+          const assetName = matchedAsset ? matchedAsset.name : "Core Payment Gateway (API)";
+          const financialImpact = isPatched ? 0 : Math.round(cvss * 35000 * (matchedAsset ? matchedAsset.criticality : 0.8));
+
+          findings.push({
+            id: `fnd-json-${Date.now()}-${i}`,
+            orgId,
+            assetId,
+            assetName,
+            cve,
+            title: item.title || item.description || `Vulnerability Finding in ${assetName} (${cve})`,
+            severity: ["Critical", "High", "Medium", "Low"].includes(sev) ? sev : "High",
+            cvssScore: cvss,
+            exploitability,
+            isPatched,
+            inCisaKev: cvss >= 8.5 || Boolean(item.inCisaKev),
+            financialImpact,
+            sourceMode: mode,
+            confidence: mode === "live" ? 0.95 : mode === "manual" ? 0.75 : 0.5,
+            discoveredAt: new Date().toISOString(),
+          });
+        }
+        if (findings.length > 0) return findings;
+      } catch (e) {
+        // Fall back to CSV parsing if JSON parse fails
+      }
+    }
+
+    // Tabular CSV / TSV Parsing
+    const lines = trimmed.split(/\r?\n/);
+    if (lines.length <= 1) return [];
+
+    const delimiter = lines[0].includes("\t") ? "\t" : lines[0].includes(";") ? ";" : ",";
+    const headers = lines[0].split(delimiter).map((h) => h.trim().replace(/^["']|["']$/g, "").toLowerCase());
+    const assetIdx = headers.findIndex((h) => h.includes("asset") || h.includes("host") || h.includes("target"));
+    const cveIdx = headers.findIndex((h) => h.includes("cve") || h.includes("vuln") || h.includes("finding"));
+    const sevIdx = headers.findIndex((h) => h.includes("sev"));
+    const cvssIdx = headers.findIndex((h) => h.includes("cvss") || h.includes("score"));
+    const expIdx = headers.findIndex((h) => h.includes("exploit") || h.includes("loss") || h.includes("impact"));
+    const patchIdx = headers.findIndex((h) => h.includes("patch") || h.includes("status"));
+
     for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(",").map((c) => c.trim());
+      const line = lines[i].trim();
+      if (!line) continue;
+      const cols = line.split(delimiter).map((c) => c.trim().replace(/^["']|["']$/g, ""));
       if (cols.length < 2 || !cols[0]) continue;
 
       const rawAsset = cols[assetIdx >= 0 ? assetIdx : 0];
@@ -45,7 +95,7 @@ export class IngestionService {
       const sev = (cols[sevIdx >= 0 ? sevIdx : 2] || "High") as Finding["severity"];
       const cvss = cvssIdx >= 0 ? parseFloat(cols[cvssIdx]) || 7.5 : 8.0;
       const exploitability = expIdx >= 0 ? parseFloat(cols[expIdx]) || 0.6 : 0.6;
-      const isPatched = patchIdx >= 0 ? cols[patchIdx].toLowerCase() === "true" : false;
+      const isPatched = patchIdx >= 0 ? (cols[patchIdx].toLowerCase() === "true" || cols[patchIdx].toLowerCase() === "patched" || cols[patchIdx].toLowerCase() === "resolved") : false;
 
       // Match asset or default to first
       const matchedAsset = assets.find((a) => a.id === rawAsset || a.name.toLowerCase().includes(rawAsset.toLowerCase())) || assets[0];
@@ -56,7 +106,7 @@ export class IngestionService {
       const financialImpact = isPatched ? 0 : Math.round(cvss * 35000 * (matchedAsset ? matchedAsset.criticality : 0.8));
 
       findings.push({
-        id: `fnd-csv-${Date.now()}-${i}`,
+        id: `fnd-data-${Date.now()}-${i}`,
         orgId,
         assetId,
         assetName,

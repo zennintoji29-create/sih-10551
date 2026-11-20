@@ -1,0 +1,42 @@
+IMPACT AND BENEFITS
+5
+Direct Impact on Target Users
+•
+Defense & Security Forces: Enables resilient navigation in 
+GPS/GNSS-denied hostile environments (mountain borders, tunnels, 
+ECM zones).
+•
+Disaster Response Teams (NDRF/SDRF): Provides ~30% faster 
+rescue operations, improving coordination in collapsed or forested 
+zones.
+•
+Rural & Remote India: Ensures accurate positioning where GPS 
+signals are weak or unavailable (forests, valleys, underground areas).
+•
+Transport & Logistics (Rail, Ports, Drones): Ensures reliable, 
+uninterrupted routing even under jamming or satellite shadowing.
+Strategic Impact
+•
+Offers GPS-independent PNT, highly resilient to jamming, 
+spoofing, and signal outages.
+•
+Strengthens India’s autonomy in defense, disaster management, 
+rural navigation, and space technology.
+•
+Impact: Contributes to Atmanirbhar Bharat by 
+establishing indigenous LEO-PNT capability for national security 
+and infrastructure.
+Economic & Strategic Benefits
+•
+Reduces GNSS licensing/import costs by 30%, 
+promoting indigenous receiver development.
+•
+₹4,750 crore total addressable market by 2030 in defense, 
+logistics, and disaster management sectors.
+•
+Superior cost effectiveness over traditional anti-jamming 
+GPS receivers through Ai-enabled cognitive efficiency.
+•
+Encourages public-private partnerships (PPP) for 
+scalable Indian navigation tech.
+Helix House

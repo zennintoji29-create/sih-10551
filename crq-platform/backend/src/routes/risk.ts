@@ -5,7 +5,7 @@ import { simulateVar } from "../engine/var";
 import { calculateRosi, accumulationRisk } from "../engine/rosi";
 import { dbStore, type AssetRecord } from "../db/store";
 import { ingestionService } from "../engine/ingestion";
-import { authMiddleware, requireRole, type AuthenticatedRequest } from "./auth";
+import { authMiddleware, requireRole, requireMinRole, type AuthenticatedRequest } from "./auth";
 
 export const riskRouter = Router();
 
@@ -97,10 +97,18 @@ riskRouter.post("/attribution", (req, res) => {
   res.json(attributeChange(parsed.data.prev, parsed.data.next));
 });
 
+// POST /api/risk/recalculate — Trigger continuous risk re-quantification across entire portfolio
+riskRouter.post("/recalculate", authMiddleware, requireMinRole("auditor"), (req: AuthenticatedRequest, res: Response) => {
+  const orgId = req.user?.orgId || "org-aegis-demo";
+  const reason = req.body?.reason || "Manual user re-quantification trigger";
+  const result = ingestionService.recalculateOrganizationRisk(orgId, reason);
+  res.json({ success: true, result });
+});
+
 // --- Multi-Tenant Audience REST APIs ---
 
-// GET /api/risk/overview — Executive Cockpit portfolio stats & trend time series
-riskRouter.get("/overview", authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+// GET /api/risk/overview — Portfolio stats & trend time series (Analyst, Admin, CISO)
+riskRouter.get("/overview", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const org = dbStore.getOrg(orgId);
   const assets = dbStore.getAssets(orgId);
@@ -152,7 +160,7 @@ riskRouter.get("/overview", authMiddleware, (req: AuthenticatedRequest, res: Res
 });
 
 // GET /api/risk/findings — Analyst Queue sorted by Financial Exposure ($)
-riskRouter.get("/findings", authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+riskRouter.get("/findings", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const findings = dbStore.getFindings(orgId);
   const sortBy = (req.query.sort as string) || "financialImpact";
@@ -165,8 +173,8 @@ riskRouter.get("/findings", authMiddleware, (req: AuthenticatedRequest, res: Res
   res.json({ findings: sorted, count: sorted.length });
 });
 
-// POST /api/risk/findings/remediate — Mark finding remediated (Blocked for Auditor)
-riskRouter.post("/findings/remediate", authMiddleware, requireRole(["admin", "analyst", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
+// POST /api/risk/findings/remediate — Mark finding remediated (Analyst, Admin, CISO)
+riskRouter.post("/findings/remediate", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { findingId } = req.body;
   if (!findingId) return res.status(400).json({ error: "findingId is required" });
@@ -175,33 +183,101 @@ riskRouter.post("/findings/remediate", authMiddleware, requireRole(["admin", "an
   const target = findings.find((f) => f.id === findingId);
   if (!target) return res.status(404).json({ error: "Finding not found" });
 
+  const originalImpact = target.financialImpact || target.originalImpact || 85000;
+  target.originalImpact = originalImpact;
   target.isPatched = true;
   target.financialImpact = 0;
 
-  // Re-run risk calculation
+  // Real asset risk mitigation: reduce asset vulnerability and increase control resistance
+  const assets = dbStore.getAssets(orgId);
+  const affectedAsset = assets.find((a) => a.id === target.assetId || a.name === target.assetName);
+  let oldEal = 0;
+  if (affectedAsset) {
+    const vulnReduction = target.severity === "Critical" ? 0.22 : target.severity === "High" ? 0.14 : 0.07;
+    const ctrlIncrease = 0.12;
+    affectedAsset.vulnerability = Math.max(0.08, Number((affectedAsset.vulnerability - vulnReduction).toFixed(2)));
+    affectedAsset.controlEffectiveness = Math.min(0.96, Number((affectedAsset.controlEffectiveness + ctrlIncrease).toFixed(2)));
+    dbStore.saveAsset(orgId, affectedAsset);
+  }
+
+  // Re-run risk calculation across all assets and generate fresh snapshot
   const result = ingestionService.recalculateOrganizationRisk(orgId, `remediation of ${target.cve} on ${target.assetName}`);
+
+  const delta = result.changeAttribution?.deltaEal || 0;
 
   dbStore.addAuditLog(
     orgId,
     req.user?.userId || "analyst",
     req.user?.role || "analyst",
     "FINDING_REMEDIATED",
-    `Remediated vulnerability ${target.cve} on ${target.assetName}. EAL reduced.`,
-    ["DORA Art. 16", "NIST CSF PR.IP-1"]
+    `Remediated vulnerability ${target.cve} on ${target.assetName}. EAL decreased by $${Math.abs(Math.round(delta)).toLocaleString()}.`,
+    ["DORA Art. 16", "NIST CSF PR.IP-1", "SEC Item 106"]
   );
 
-  res.json({ success: true, finding: target, recalculation: result });
+  res.json({
+    success: true,
+    finding: target,
+    savedEal: originalImpact,
+    deltaEal: delta,
+    recalculation: result,
+  });
+});
+
+// POST /api/risk/findings/reopen — Reopen a remediated finding (Analyst, Admin, CISO)
+riskRouter.post("/findings/reopen", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
+  const orgId = req.user?.orgId || "org-aegis-demo";
+  const { findingId } = req.body;
+  if (!findingId) return res.status(400).json({ error: "findingId is required" });
+
+  const findings = dbStore.getFindings(orgId);
+  const target = findings.find((f) => f.id === findingId);
+  if (!target) return res.status(404).json({ error: "Finding not found" });
+
+  const restoredImpact = target.originalImpact || 120000;
+  target.isPatched = false;
+  target.financialImpact = restoredImpact;
+
+  // Restore vulnerability on the affected asset
+  const assets = dbStore.getAssets(orgId);
+  const affectedAsset = assets.find((a) => a.id === target.assetId || a.name === target.assetName);
+  if (affectedAsset) {
+    const vulnAddition = target.severity === "Critical" ? 0.22 : target.severity === "High" ? 0.14 : 0.07;
+    affectedAsset.vulnerability = Math.min(0.95, Number((affectedAsset.vulnerability + vulnAddition).toFixed(2)));
+    affectedAsset.controlEffectiveness = Math.max(0.20, Number((affectedAsset.controlEffectiveness - 0.12).toFixed(2)));
+    dbStore.saveAsset(orgId, affectedAsset);
+  }
+
+  // Re-run risk calculation
+  const result = ingestionService.recalculateOrganizationRisk(orgId, `re-opened vulnerability ${target.cve} on ${target.assetName}`);
+  const delta = result.changeAttribution?.deltaEal || 0;
+
+  dbStore.addAuditLog(
+    orgId,
+    req.user?.userId || "analyst",
+    req.user?.role || "analyst",
+    "FINDING_REOPENED",
+    `Re-opened vulnerability ${target.cve} on ${target.assetName}. EAL increased by $${Math.abs(Math.round(delta)).toLocaleString()}.`,
+    ["NIST CSF ID.RA-1"]
+  );
+
+  res.json({
+    success: true,
+    finding: target,
+    restoredImpact,
+    deltaEal: delta,
+    recalculation: result,
+  });
 });
 
 // GET /api/risk/assets — In-App Asset Register
-riskRouter.get("/assets", authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+riskRouter.get("/assets", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const assets = dbStore.getAssets(orgId);
   res.json({ assets, count: assets.length });
 });
 
-// POST /api/risk/assets — Register or update asset (Blocked for Auditor)
-riskRouter.post("/assets", authMiddleware, requireRole(["admin", "analyst"]), (req: AuthenticatedRequest, res: Response) => {
+// POST /api/risk/assets — Register or update asset (Analyst, Admin, CISO)
+riskRouter.post("/assets", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { name, criticality = 0.8, owner = "SecOps", directCosts = 500000, indirectCosts = 500000, regulatoryCosts = 250000 } = req.body;
 
@@ -227,7 +303,7 @@ riskRouter.post("/assets", authMiddleware, requireRole(["admin", "analyst"]), (r
 });
 
 // GET /api/risk/controls — ROSI proposed & deployed controls
-riskRouter.get("/controls", authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+riskRouter.get("/controls", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const controls = dbStore.getControls(orgId);
   const assets = dbStore.getAssets(orgId);
@@ -257,8 +333,8 @@ riskRouter.get("/controls", authMiddleware, (req: AuthenticatedRequest, res: Res
   res.json({ controls: evaluated, portfolioEal });
 });
 
-// POST /api/risk/controls/deploy — Deploy control with closed-loop validation (Blocked for Auditor)
-riskRouter.post("/controls/deploy", authMiddleware, requireRole(["admin", "ciso"]), (req: AuthenticatedRequest, res: Response) => {
+// POST /api/risk/controls/deploy — Deploy control with closed-loop validation (Admin & CISO)
+riskRouter.post("/controls/deploy", authMiddleware, requireMinRole("admin"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { controlId, observedEalReduction } = req.body;
   if (!controlId) return res.status(400).json({ error: "controlId is required" });
@@ -271,8 +347,37 @@ riskRouter.post("/controls/deploy", authMiddleware, requireRole(["admin", "ciso"
   res.json({ success: true, control: deployed });
 });
 
+// POST /api/risk/monte-carlo — Run Monte Carlo loss trial simulation (Analyst, Admin, CISO)
+riskRouter.post("/monte-carlo", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
+  const orgId = req.user?.orgId || "org-aegis-demo";
+  const { confidence = 0.95, simulations = 10000 } = req.body;
+  const assets = dbStore.getAssets(orgId);
+
+  const fairResults = assets.map((a) =>
+    calculateFair(
+      { assetId: a.id, criticality: a.criticality },
+      { tef: a.tef, vulnerability: a.vulnerability, controlEffectiveness: a.controlEffectiveness, aiAmplificationFactor: a.aiAmplificationFactor },
+      { directCosts: a.directCosts, indirectCosts: a.indirectCosts, regulatoryCosts: a.regulatoryCosts }
+    )
+  );
+
+  const simCount = Math.min(50000, Math.max(1000, Number(simulations)));
+  const confValue = Number(confidence);
+  const varOutput = simulateVar(fairResults, {
+    confidence: confValue,
+    simulations: simCount,
+  });
+
+  res.json({
+    success: true,
+    simulations: simCount,
+    confidence: confValue,
+    results: varOutput,
+  });
+});
+
 // POST /api/risk/what-if — Real-time slider recalculation
-riskRouter.post("/what-if", authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+riskRouter.post("/what-if", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const { mfaRolloutPct = 70, edrCoveragePct = 75, aiThreatSurge = false } = req.body;
 
@@ -313,7 +418,7 @@ riskRouter.post("/what-if", authMiddleware, (req: AuthenticatedRequest, res: Res
 });
 
 // GET /api/risk/third-party-vendors — Vendor concentration with SPoF correlation surcharge
-riskRouter.get("/third-party-vendors", authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+riskRouter.get("/third-party-vendors", authMiddleware, requireMinRole("analyst"), (req: AuthenticatedRequest, res: Response) => {
   const orgId = req.user?.orgId || "org-aegis-demo";
   const vendors = dbStore.getVendors(orgId);
 
